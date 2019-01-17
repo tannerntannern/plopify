@@ -2,10 +2,27 @@
   "name": "plopify",
   "version": "0.1.0-alpha.0",
   "description": "An extension of Plop.js that solves the problem of updating projects generated from a template.",
+  "files": [
+    "dist"
+  ],
+  "bin": {
+    "plopify": "dist/bin.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "yarn build -- --watch"
+  },
+  "dependencies": {
+    "commander": "^2.19.0"
+  },
   "devDependencies": {
+    "@types/node": "^10.12.18",
     "typescript": "^3.2.2"
   },
-  "repository": "https://github.com/tannerntannern/plopify.git",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tannerntannern/plopify.git"
+  },
   "author": "Tanner Nielsen <tannerntannern@gmail.com>",
   "license": "MIT"
 }
