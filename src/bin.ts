@@ -14,7 +14,4 @@ program
 		console.log('Calling `init` with', name);
 	});
 
-program
-	.command('*');
-
 program.parse(process.argv);
