@@ -1,0 +1,11 @@
+{
+  "name": "plopify",
+  "version": "0.1.0-alpha.0",
+  "description": "An extension of Plop.js that solves the problem of updating projects generated from a template.",
+  "devDependencies": {
+    "typescript": "^3.2.2"
+  },
+  "repository": "https://github.com/tannerntannern/plopify.git",
+  "author": "Tanner Nielsen <tannerntannern@gmail.com>",
+  "license": "MIT"
+}
