@@ -10,13 +10,18 @@
   },
   "scripts": {
     "build": "tsc",
-    "build-clean": "rm -rf ./dist && yarn build && git add ./dist",
+    "build-clean": "rm -rf ./dist && yarn build",
     "watch": "yarn build -- --watch",
     "lint": "eslint src/**/*.ts",
     "test": "nyc mocha --recursive -r ts-node/register test/**/*.test.*",
     "coverage": "nyc report",
     "coveralls": "cat ./coverage/lcov.info | coveralls",
     "release": "standard-version -a"
+  },
+  "standard-version": {
+    "scripts": {
+      "prerelease": "yarn lint && yarn test && yarn build-clean"
+    }
   },
   "dependencies": {
     "commander": "^2.19.0"
