@@ -1,7 +1,7 @@
 {
   "name": "plopify",
   "version": "0.1.0-alpha.0",
-  "description": "An extension of Plop.js that solves the problem of updating projects generated from a template.",
+  "description": "An extension of Plop.js that takes project templating to the next level.",
   "files": [
     "dist"
   ],
