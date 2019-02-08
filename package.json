@@ -24,7 +24,11 @@
     }
   },
   "dependencies": {
-    "commander": "^2.19.0"
+    "commander": "^2.19.0",
+    "io-ts": "^1.8.1",
+    "io-ts-types": "^0.4.2",
+    "node-plop": "^0.17.3",
+    "rc.ts": "^1.0.1"
   },
   "devDependencies": {
     "@commitlint/cli": "^7.3.2",
