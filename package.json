@@ -47,6 +47,9 @@
     "typescript": "^3.2.2",
     "typescript-eslint-parser": "^21.0.2"
   },
+  "keywords": [
+    "template", "templating", "scaffold", "scaffolding", "plop", "plop.js", "project scaffolding", "project templating"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/tannerntannern/plopify.git"
