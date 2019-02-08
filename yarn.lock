@@ -3573,10 +3573,10 @@ randomatic@^3.0.0:
     kind-of "^6.0.0"
     math-random "^1.0.1"
 
-rc.ts@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/rc.ts/-/rc.ts-1.0.1.tgz#8e409f6a98d0e944a5898a7226bb0bcd7f3fc650"
-  integrity sha512-F3bvfxSwrCd+rziTRVigwznqd4haf+b1Nix4MbXFJwtfV876SRBZXBPBJC/zYj9ltDgLlDQxyAMI/zqTTz77bA==
+rc.ts@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/rc.ts/-/rc.ts-1.0.2.tgz#e4e9fcb9854935d152c659a1835dd22152739504"
+  integrity sha512-R+YAxuObnT02PBZ7iyEJcFIT6u3nPQVHhdZ2Qfyxz8XhD2iZ7htlBGr4czwTcDnMmvXmq9uMCNM3mRGSb/x1WQ==
 
 read-pkg-up@^1.0.1:
   version "1.0.1"
