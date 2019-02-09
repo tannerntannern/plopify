@@ -14,20 +14,10 @@
     "no-console": "off",
     "no-undef": "off",
     "no-unused-vars": "warn",
-    "indent": [
-      "error",
-      "tab"
-    ],
-    "quotes": [
-      "error",
-      "single"
-    ],
-    "semi": [
-      "error",
-      "always"
-    ],
-    "no-var": [
-      "error"
-    ]
+    "indent": ["error", "tab"],
+    "quotes": ["error", "single"],
+    "semi": ["error", "always"],
+    "no-var": ["error"],
+    "eol-last": "error"
   }
 }
