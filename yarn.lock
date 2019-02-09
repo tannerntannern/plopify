@@ -1835,7 +1835,7 @@ form-data@~2.3.2:
     combined-stream "^1.0.6"
     mime-types "^2.1.12"
 
-fp-ts@^1.0.0, fp-ts@^1.11.0:
+fp-ts@^1.0.0, fp-ts@^1.0.1, fp-ts@^1.11.0:
   version "1.13.0"
   resolved "https://registry.yarnpkg.com/fp-ts/-/fp-ts-1.13.0.tgz#004803434e6c92021232746a621d3c2429c3d5cc"
   integrity sha512-QDPtCkuLay+dX3zinnvt0ER+j8mdWZZSpM//DIY3GycgwUTDPBKFD7CxX5DU/mIDstcWqGuuUSrMNtB6MWluCQ==
@@ -2300,6 +2300,14 @@ invert-kv@^1.0.0:
   resolved "https://registry.yarnpkg.com/invert-kv/-/invert-kv-1.0.0.tgz#104a8e4aaca6d3d8cd157a8ef8bfab2d7a3ffdb6"
   integrity sha1-EEqOSqym09jNFXqO+L+rLXo//bY=
 
+io-ts-reporters@^0.0.21:
+  version "0.0.21"
+  resolved "https://registry.yarnpkg.com/io-ts-reporters/-/io-ts-reporters-0.0.21.tgz#b0be3eec37a3d7da77aeafa257c68bd2afbbc4af"
+  integrity sha512-HRAYn4IVkRbnL9Uy9WDB/1+0lorRZvE239LMdc0ditN8OhsPg+0vKnqchkGhZ/vyTzLC5CZLO4AZ4xreirkIkA==
+  dependencies:
+    fp-ts "^1.0.1"
+    io-ts "^1.0.2"
+
 io-ts-types@^0.4.2:
   version "0.4.2"
   resolved "https://registry.yarnpkg.com/io-ts-types/-/io-ts-types-0.4.2.tgz#e5234e6fe18172a31f5f95ddebeebcd339aaaa15"
@@ -2310,7 +2318,7 @@ io-ts-types@^0.4.2:
     monocle-ts "^1.0.0"
     newtype-ts "^0.2.1"
 
-io-ts@^1.7.1, io-ts@^1.8.1:
+io-ts@^1.0.2, io-ts@^1.7.1, io-ts@^1.8.1:
   version "1.8.1"
   resolved "https://registry.yarnpkg.com/io-ts/-/io-ts-1.8.1.tgz#8e4534e5eb491f0b624394ba42085f68dc84268b"
   integrity sha512-MhFHaBbzw1MK6s16QPW8Tgkj5SW5wBjeQERsk5hupfBSC6WQeQ4MoPACPbm7LUUXU8jZJaqrVGuBTWqCuZYP0A==
@@ -3694,10 +3702,12 @@ randomatic@^3.0.0:
     kind-of "^6.0.0"
     math-random "^1.0.1"
 
-rc.ts@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/rc.ts/-/rc.ts-1.1.1.tgz#9ca610f83e0608e82bbe45e5cffad6eddcc0f71c"
-  integrity sha512-pN9WbX5OgmWuMOG0yRY9yHsMCkyM9Ac4f39vPt2QD3IuWo8EduSS3yD2gpHyTGqprD8Va6zYYlKFVq2U34yNbQ==
+rc.ts@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/rc.ts/-/rc.ts-1.2.0.tgz#b1059765b18d1fd5d527957ff37e1b1c8095620a"
+  integrity sha512-AN+QZKn0m18RYm0w/DWsmeOzPOZmRmBYsi2/Heyey4LMoHmjpC7e99ZBH5q2A/IE3XYnvLIz9bBtdyBunTxKew==
+  dependencies:
+    io-ts-reporters "^0.0.21"
 
 read-pkg-up@^1.0.1:
   version "1.0.1"

@@ -29,7 +29,7 @@
     "io-ts": "^1.8.1",
     "io-ts-types": "^0.4.2",
     "node-plop": "^0.17.3",
-    "rc.ts": "^1.1.1"
+    "rc.ts": "^1.2.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^7.3.2",
