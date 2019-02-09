@@ -4,7 +4,7 @@ import * as program from 'commander';
 const packageJson = require('../package.json');
 
 import loader from 'rc.ts';
-import {PlopifyRuntimeConfig} from './plopifyrc';
+import {RCSchema} from './rc.schema';
 
 program
 	.version(packageJson.version, '-v, --version');
@@ -22,7 +22,7 @@ program
 	.command('read <name>')
 	.description('Temporary testing command for parsing a config')
 	.action((name, options) => {
-		const data = loader(PlopifyRuntimeConfig).loadConfigFile(path.resolve(name));
+		const data = loader(RCSchema).loadConfigFile(path.resolve(name));
 		console.log(data);
 	});
 
