@@ -58,14 +58,17 @@ const Type = t.keyof({
 	blocks: null
 });
 
+const UpdatePolicyBase = t.type({
+	type: Type,
+	files: t.union([t.string, t.array(t.string)]),
+});
+
 const UpdatePolicy = t.intersection([
-	t.type({
-		type: Type,
-		files: t.union([t.string, t.array(t.string)]),
-	}),
+	UpdatePolicyBase,
 	t.union([
 		t.type({
-			type: t.literal('ignore')
+			type: t.literal('ignore'),
+			includeGitignore: withDefault(t.boolean, true)
 		}),
 		t.intersection([
 			t.type({
@@ -76,12 +79,11 @@ const UpdatePolicy = t.intersection([
 					type: t.keyof({
 						wholeFile: null,
 						lines: null,
-						blocks: null
 					})
 				}),
 				t.type({
 					type: t.literal('jsonKeys'),
-					handlers: t.record(
+					handlers: withDefault(t.record(
 						t.string,
 						t.union([
 							ChangeHandler,
@@ -90,7 +92,11 @@ const UpdatePolicy = t.intersection([
 								children: withDefault(t.boolean, false)
 							})
 						])
-					)
+					), {})
+				}),
+				t.type({
+					type: t.literal('blocks'),
+					handlers: withDefault(t.record(t.string, ChangeHandler), {})
 				})
 			])
 		])
@@ -98,15 +104,21 @@ const UpdatePolicy = t.intersection([
 ]);
 
 export let RCSchema = t.type({
-	templateVersion: t.string,
-	stagingDir: withDefault(t.string, '.staging'),
 	prompts: t.array(Question),
-	updatePolicies: t.array(UpdatePolicy)
+	updatePolicies: t.array(UpdatePolicy),
+	hooks: withDefault(t.partial({
+		preGenerate: t.string,
+		postGenerate: t.string,
+		preUpdate: t.string,
+		postUpdate: t.string
+	}), {})
 });
 
 export let EjectedRCSchema = t.intersection([
 	RCSchema,
 	t.type({
 		plopifyVersion: t.string,
+		templateLocation: t.string,
+		answers: t.record(t.string, t.string)
 	})
 ]);
