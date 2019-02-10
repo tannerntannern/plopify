@@ -1,4 +1,5 @@
 import * as t from 'io-ts';
+import {withDefault} from 'rc.ts';
 
 const QuestionType = t.keyof({
 	input: null,
@@ -20,7 +21,7 @@ const QuestionChoice = t.union([
 	}),
 ]);
 
-const Question = t.union([
+const Question = t.intersection([
 	t.type({
 		name: t.string,
 	}),
@@ -41,14 +42,69 @@ const Question = t.union([
 	})
 ]);
 
-export let RCSchema = t.type({
-	templateVersion: t.string,
-	stagingDir: t.string,
-	prompts: t.array(Question),
-	ignore: t.array(t.string)
+const ChangeHandler = t.keyof({
+	accept: null,
+	reject: null,
+	ask: null,
+	askAccept: null,
+	askReject: null
 });
 
-export let EjectedRCSchema = t.union([
+const Type = t.keyof({
+	ignore: null,
+	wholeFile: null,
+	lines: null,
+	jsonKeys: null,
+	blocks: null
+});
+
+const UpdatePolicy = t.intersection([
+	t.type({
+		type: Type,
+		files: t.union([t.string, t.array(t.string)]),
+	}),
+	t.union([
+		t.type({
+			type: t.literal('ignore')
+		}),
+		t.intersection([
+			t.type({
+				defaultHandler: withDefault(ChangeHandler, 'ask')
+			}),
+			t.union([
+				t.type({
+					type: t.keyof({
+						wholeFile: null,
+						lines: null,
+						blocks: null
+					})
+				}),
+				t.type({
+					type: t.literal('jsonKeys'),
+					handlers: t.record(
+						t.string,
+						t.union([
+							ChangeHandler,
+							t.type({
+								handler: ChangeHandler,
+								children: withDefault(t.boolean, false)
+							})
+						])
+					)
+				})
+			])
+		])
+	])
+]);
+
+export let RCSchema = t.type({
+	templateVersion: t.string,
+	stagingDir: withDefault(t.string, '.staging'),
+	prompts: t.array(Question),
+	updatePolicies: t.array(UpdatePolicy)
+});
+
+export let EjectedRCSchema = t.intersection([
 	RCSchema,
 	t.type({
 		plopifyVersion: t.string,
