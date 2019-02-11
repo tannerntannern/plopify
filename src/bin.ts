@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 import * as fs from 'fs';
+import * as fse from 'fs-extra';
 import * as path from 'path';
 import * as glob from 'glob';
-import * as mkdirp from 'mkdirp';
-import * as rimraf from 'rimraf';
 import * as validUrl from 'valid-url';
 import * as hbs from 'handlebars';
 import chalk from 'chalk';
@@ -23,7 +22,7 @@ const logStatus = (success: boolean) => console.log(success ? chalk.greenBright(
 /**
  * Cleans up any left over staging artifacts.  Namely, `.staging-*`.
  */
-const cleanUpStaging = () => rimraf.sync(path.resolve(__dirname, '.staging-*'));
+const cleanUpStaging = () => fse.removeSync(path.resolve(__dirname, '.staging-*'));
 
 /**
  * ABORT!
@@ -150,7 +149,7 @@ const generateTemplate = (templateLocation: string, templateDir: string, data: {
 	for (let file of templateFiles) {
 		// Make sure the parent directories exist
 		const outFile = path.resolve(outDir, renderString(file, data));
-		mkdirp.sync(path.dirname(outFile));
+		fse.mkdirpSync(path.dirname(outFile));
 
 		const fileContent = fs.readFileSync(path.resolve(templateDir, file), 'utf8');
 		fs.writeFileSync(outFile, renderString(fileContent, data));
@@ -197,6 +196,8 @@ program
 	.description('Updates an existing project based on changes from the template')
 	.option('-p --prompts', 'prompt the user for input again instead of using the saved answers')
 	.action((project, options) => {
+		console.log(header);
+
 		// TODO: ...
 	});
 
@@ -204,6 +205,8 @@ program
 	.command('init <dir>')
 	.description('Initializes a project template that can be used to generate other projects')
 	.action((dir, options) => {
+		console.log(header);
+
 		// TODO: ...
 	});
 
