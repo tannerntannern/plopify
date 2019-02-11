@@ -2,7 +2,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as glob from 'glob';
-import * as walk from 'walk';
 import * as mkdirp from 'mkdirp';
 import * as rimraf from 'rimraf';
 import * as validUrl from 'valid-url';
@@ -35,6 +34,11 @@ const abandonShip = () => {
 };
 
 /**
+ * Quick utility for determining whether the given template is local or remote.
+ */
+const determineTemplateType = (template: string) => validUrl.isUri(template) ? 'remote' : 'local';
+
+/**
  * A hefty helper function that does all the necessary preparations for staging, including setting up a staging
  * directory, pre-screening, and cloning the template repository if necessary.
  *
@@ -54,7 +58,10 @@ const prepareForStaging = (template: string): string => {
 	}
 
 	// 1. Determine template type
-	const templateType = validUrl.isUri(template) ? 'remote' : 'local';
+	const templateType = determineTemplateType(template);
+	if (templateType === 'local') {
+		console.log(chalk.yellow('WARNING:'), 'Using a local template will cause issues for collaborators.  Consider using a repo URL instead.');
+	}
 
 	// 2. Make sure template exists
 	process.stdout.write('Searching for template... ');
@@ -128,36 +135,37 @@ const renderString = (templateString: string, data: {[key: string]: any}): strin
 /**
  * Takes a templateDir and generates a new instance to outDir using the given data.
  */
-const generateTemplate = (templateDir: string, data: {[key: string]: any}, outDir: string): Promise<number> => {
-	return new Promise((resolve, reject) => {
-		let filesGenerated = 0;
-		process.stdout.write('Generating project... ');
+const generateTemplate = (templateLocation: string, templateDir: string, data: {[key: string]: any}, outDir: string): number => {
+	process.stdout.write('Generating project... ');
 
-		mkdirp.sync(outDir);
+	// Collect the relative file paths/names of every file in the template (excluding .plopifyrc.js)
+	const relativeTrim = templateDir.length + 1;
+	const templateFiles = glob.sync(path.resolve(templateDir, '**/*'), {
+		dot: true,
+		nodir: true,
+		ignore: '**/.plopifyrc.js',
+	}).map(file => file.substr(relativeTrim));
 
-		const walker = walk.walk(templateDir);
-		walker.on('directory', (root, stats, next) => {
-			const relative = path.relative(templateDir, root);
-			mkdirp.sync(path.resolve(outDir, relative, renderString(stats.name, data)));
-			next();
-		});
+	// Render out each file
+	for (let file of templateFiles) {
+		// Make sure the parent directories exist
+		const outFile = path.resolve(outDir, renderString(file, data));
+		mkdirp.sync(path.dirname(outFile));
 
-		walker.on('file', (root, stats, next) => {
-			const relative = renderString(path.relative(templateDir, root), data);
-			const fileContent = fs.readFileSync(path.resolve(root, stats.name), 'utf8');
-			fs.writeFileSync(
-				path.resolve(outDir, relative, renderString(stats.name, data)),
-				renderString(fileContent, data)
-			);
-			filesGenerated ++;
-			next();
-		});
+		const fileContent = fs.readFileSync(path.resolve(templateDir, file), 'utf8');
+		fs.writeFileSync(outFile, renderString(fileContent, data));
+	}
 
-		walker.on('end', () => {
-			logStatus(true);
-			resolve(filesGenerated);
-		});
-	});
+	// Render out new .plopifyrc.json
+	const plopifyRcData = {
+		plopifyVersion: packageJson.version,
+		templateLocation: determineTemplateType(templateLocation) === 'remote' ? templateLocation : path.resolve(templateLocation),
+		answers: data
+	};
+	fs.writeFileSync(path.resolve(outDir, '.plopifyrc.json'), JSON.stringify(plopifyRcData, null, 2));
+
+	logStatus(true);
+	return templateFiles.length + 1;
 };
 
 program
@@ -175,7 +183,7 @@ program
 		const answers = await prompt(config.prompts);
 
 		const fullOutDir = path.resolve(outdir);
-		const totalFiles = await generateTemplate(templateDir, answers, path.resolve(fullOutDir));
+		const totalFiles = await generateTemplate(template, templateDir, answers, path.resolve(fullOutDir));
 		cleanUpStaging();
 
 		console.log(

@@ -34,8 +34,7 @@
     "mkdirp": "^0.5.1",
     "rc.ts": "^1.2.0",
     "rimraf": "^2.6.3",
-    "valid-url": "^1.0.9",
-    "walk": "^2.3.14"
+    "valid-url": "^1.0.9"
   },
   "devDependencies": {
     "@commitlint/cli": "^7.3.2",
