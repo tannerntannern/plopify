@@ -128,8 +128,9 @@ const renderString = (templateString: string, data: {[key: string]: any}): strin
 /**
  * Takes a templateDir and generates a new instance to outDir using the given data.
  */
-const generateTemplate = (templateDir: string, data: {[key: string]: any}, outDir: string): Promise<any> => {
+const generateTemplate = (templateDir: string, data: {[key: string]: any}, outDir: string): Promise<number> => {
 	return new Promise((resolve, reject) => {
+		let filesGenerated = 0;
 		process.stdout.write('Generating project... ');
 
 		mkdirp.sync(outDir);
@@ -148,12 +149,13 @@ const generateTemplate = (templateDir: string, data: {[key: string]: any}, outDi
 				path.resolve(outDir, relative, renderString(stats.name, data)),
 				renderString(fileContent, data)
 			);
+			filesGenerated ++;
 			next();
 		});
 
 		walker.on('end', () => {
 			logStatus(true);
-			resolve();
+			resolve(filesGenerated);
 		});
 	});
 };
@@ -172,9 +174,14 @@ program
 		const config = loader(RCSchema).loadConfigFile(path.resolve(templateDir, '.plopifyrc.js'));
 		const answers = await prompt(config.prompts);
 
-		await generateTemplate(templateDir, answers, path.resolve(outdir));
-
+		const fullOutDir = path.resolve(outdir);
+		const totalFiles = await generateTemplate(templateDir, answers, path.resolve(fullOutDir));
 		cleanUpStaging();
+
+		console.log(
+			chalk.bold.bgGreen(' SUCCESS '),
+			chalk.yellow('+' + totalFiles), 'files added at', chalk.underline.blue(fullOutDir)
+		);
 	});
 
 program
