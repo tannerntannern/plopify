@@ -114,11 +114,8 @@ export let RCSchema = t.type({
 	}), {})
 });
 
-export let EjectedRCSchema = t.intersection([
-	RCSchema,
-	t.type({
-		plopifyVersion: t.string,
-		templateLocation: t.string,
-		answers: t.record(t.string, t.string)
-	})
-]);
+export let EjectedRCSchema = t.type({
+	plopifyVersion: t.string,
+	templateLocation: t.string,
+	answers: t.record(t.string, t.string)
+});

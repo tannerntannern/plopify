@@ -2,8 +2,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as glob from 'glob';
+import * as walk from 'walk';
+import * as mkdirp from 'mkdirp';
 import * as rimraf from 'rimraf';
 import * as validUrl from 'valid-url';
+import * as hbs from 'handlebars';
 import chalk from 'chalk';
 import {prompt} from 'inquirer';
 import * as program from 'commander';
@@ -115,6 +118,46 @@ const prepareForStaging = (template: string): string => {
 	return templateDir;
 };
 
+/**
+ * Simple function that uses handlebars to render a template string with data.
+ */
+const renderString = (templateString: string, data: {[key: string]: any}): string => {
+	return hbs.compile(templateString)(data);
+};
+
+/**
+ * Takes a templateDir and generates a new instance to outDir using the given data.
+ */
+const generateTemplate = (templateDir: string, data: {[key: string]: any}, outDir: string): Promise<any> => {
+	return new Promise((resolve, reject) => {
+		process.stdout.write('Generating project... ');
+
+		mkdirp.sync(outDir);
+
+		const walker = walk.walk(templateDir);
+		walker.on('directory', (root, stats, next) => {
+			const relative = path.relative(templateDir, root);
+			mkdirp.sync(path.resolve(outDir, relative, renderString(stats.name, data)));
+			next();
+		});
+
+		walker.on('file', (root, stats, next) => {
+			const relative = renderString(path.relative(templateDir, root), data);
+			const fileContent = fs.readFileSync(path.resolve(root, stats.name), 'utf8');
+			fs.writeFileSync(
+				path.resolve(outDir, relative, renderString(stats.name, data)),
+				renderString(fileContent, data)
+			);
+			next();
+		});
+
+		walker.on('end', () => {
+			logStatus(true);
+			resolve();
+		});
+	});
+};
+
 program
 	.version(packageJson.version, '-v, --version');
 
@@ -127,10 +170,9 @@ program
 		let templateDir = prepareForStaging(template);
 
 		const config = loader(RCSchema).loadConfigFile(path.resolve(templateDir, '.plopifyrc.js'));
-
 		const answers = await prompt(config.prompts);
 
-		console.log(answers);
+		await generateTemplate(templateDir, answers, path.resolve(outdir));
 
 		cleanUpStaging();
 	});

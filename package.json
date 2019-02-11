@@ -3,7 +3,8 @@
   "version": "0.1.0-alpha.0",
   "description": "An extension of Plop.js that takes project templating to the next level.",
   "files": [
-    "dist"
+    "dist",
+    "templates"
   ],
   "bin": {
     "plopify": "dist/bin.js"
@@ -27,12 +28,14 @@
     "chalk": "^2.4.2",
     "commander": "^2.19.0",
     "glob": "^7.1.3",
+    "handlebars": "^4.1.0",
     "inquirer": "^6.2.2",
     "io-ts": "^1.8.1",
-    "node-plop": "^0.17.3",
+    "mkdirp": "^0.5.1",
     "rc.ts": "^1.2.0",
     "rimraf": "^2.6.3",
-    "valid-url": "^1.0.9"
+    "valid-url": "^1.0.9",
+    "walk": "^2.3.14"
   },
   "devDependencies": {
     "@commitlint/cli": "^7.3.2",
