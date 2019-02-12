@@ -206,8 +206,20 @@ program
 	.description('Initializes a project template that can be used to generate other projects')
 	.action((dir, options) => {
 		console.log(header);
+		process.stdout.write('Copying files... ');
 
-		// TODO: ...
+		const outDir = path.resolve(dir);
+		const templateDir = path.resolve(__dirname, '../templates/project-template/');
+		const totalFiles = glob.sync(path.resolve(templateDir, '**/*'), {dot: true, nodir: true}).length;
+
+		fse.mkdirpSync(outDir);
+		fse.copySync(templateDir, outDir);
+
+		logStatus(true);
+		console.log(
+			chalk.bold.bgGreen(' SUCCESS '),
+			chalk.yellow('+' + totalFiles), 'files added at', chalk.underline.blue(outDir)
+		);
 	});
 
 program.parse(process.argv);

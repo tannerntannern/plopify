@@ -1,6 +1,0 @@
-{
-  "name": "{{project_name}}",
-  "dependencies": {
-	"micro-observer": "^0.0.19"
-  }
-}
