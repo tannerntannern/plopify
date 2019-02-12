@@ -107,10 +107,10 @@ export let RCSchema = t.type({
 	prompts: t.array(Question),
 	updatePolicies: t.array(UpdatePolicy),
 	hooks: withDefault(t.partial({
-		preGenerate: t.string,
-		postGenerate: t.string,
-		preUpdate: t.string,
-		postUpdate: t.string
+		preGenerate: t.union([t.string, t.array(t.string)]),
+		postGenerate: t.union([t.string, t.array(t.string)]),
+		preUpdate: t.union([t.string, t.array(t.string)]),
+		postUpdate: t.union([t.string, t.array(t.string)])
 	}), {})
 });
 
