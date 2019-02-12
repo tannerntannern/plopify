@@ -1,6 +1,6 @@
 {
   "name": "plopify",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "A Plop-inspired tool that takes project templating to the next level.",
   "files": [
     "dist",
