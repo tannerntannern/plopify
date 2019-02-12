@@ -1,5 +1,5 @@
 # plopify
-[![npm version](https://badge.fury.io/js/plopify.svg)](https://badge.fury.io/js/plopify)
+[![npm version](https://badgen.net/npm/v/plopify)](https://npmjs.com/package/plopify)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
 
 A Plop-inspired tool that takes project templating to the next level.
@@ -14,9 +14,17 @@ What's the point of defining a template for your projects when your preferences 
 These are the problems that this project was created to solve.  `plopify` makes it easy to keep your projects in sync with a template, without tedious work.  Not only does it help you stay consistent, but it allows you to experiment more with your project structure without the dread of converting old projects.
 
 ## A Note on Plop.js
-`plopify` is meant to be used for generating and updating projects based on a template.  It's not designed for generating individual files (components/models/migrations) as you would with a tool like [Plop.js](https://www.npmjs.com/package/plop).  Despite the name, `plopify` doesn't actually use Plop.js internally.
+You may have heard of [Plop.js](https://www.npmjs.com/package/plop) before.  This project takes inspiration from Plop but doesn't use it internally, despite the name.  `plopify` differs in that it is designed for _inter-project_ templating, while Plop is primarily designed for _intra-project_ templating.  
 
-However, Plop.js and `plopify` can be very complimentary because Plop.js _is_ designed for individual files, and not as much for project generation and updates.  Furthermore, both projects utilize [Inquirer](https://www.npmjs.com/package/inquirer) and [Handlebars](https://www.npmjs.com/package/handlebars), so working with one coming from the other should feel very familiar.
+This actually makes the two tools quite complementary because their use-cases don't overlap.  Furthermore, both projects utilize [Inquirer](https://www.npmjs.com/package/inquirer) and [Handlebars](https://www.npmjs.com/package/handlebars), so working with one coming from the other should feel very familiar. 
 
 ## Getting Started
-(coming soon)
+### Installation
+`plopify` is available on npm.  It should be installed globally, but it can be installed as a dev dependency if you really want.
+
+```
+npm i -g plopify              # with npm
+yarn global add plopify       # with yarn
+```
+
+(more coming soon)
