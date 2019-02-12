@@ -12,7 +12,7 @@ import {spawnSync} from 'child_process';
 import loader from 'rc.ts';
 
 const packageJson = require('../package.json');
-import {RCSchema} from './rc.schema';
+import {RCSchema, EjectedRCSchema} from './rc.schema';
 
 const header = chalk.bold.bgBlue(' ' + packageJson.name + ' ') + chalk.bold.bgYellow(' v' + packageJson.version + ' ');
 
@@ -22,6 +22,7 @@ const logStatus = (success: boolean) => console.log(success ? chalk.greenBright(
 /**
  * Cleans up any left over staging artifacts.  Namely, `.staging-*`.
  */
+// TODO: this isn't working anymore
 const cleanUpStaging = () => fse.removeSync(path.resolve(__dirname, '.staging-*'));
 
 /**
@@ -43,7 +44,7 @@ const determineTemplateType = (template: string) => validUrl.isUri(template) ? '
  *
  * @returns a path to the template directory if successful.
  */
-const prepareForStaging = (template: string): string => {
+const prepareForStaging = (template: string): {templateDir: string, stagingDir: string} => {
 	let templateDir: string;
 
 	// 0. Clean up any staging data that was orphaned from a previous run
@@ -58,12 +59,9 @@ const prepareForStaging = (template: string): string => {
 
 	// 1. Determine template type
 	const templateType = determineTemplateType(template);
-	if (templateType === 'local') {
-		console.log(chalk.yellow('WARNING:'), 'Using a local template will cause issues for collaborators.  Consider using a repo URL instead.');
-	}
 
 	// 2. Make sure template exists
-	process.stdout.write('Searching for template... ');
+	process.stdout.write('Locating template... ');
 
 	let exists: boolean;
 	if (templateType === 'local') {
@@ -91,6 +89,11 @@ const prepareForStaging = (template: string): string => {
 		}
 
 		abandonShip();
+	}
+
+	// 2b. Warn about local templates
+	if (templateType === 'local') {
+		console.log(chalk.yellow('WARNING:'), 'Using a local template will cause issues for collaborators.  Consider using a repo URL instead.');
 	}
 
 	// 3. Generate random directory name for a staging area
@@ -121,7 +124,7 @@ const prepareForStaging = (template: string): string => {
 	}
 
 	// If we make it here, we have succeeded
-	return templateDir;
+	return {templateDir, stagingDir};
 };
 
 /**
@@ -156,15 +159,25 @@ const generateTemplate = (templateLocation: string, templateDir: string, data: {
 	}
 
 	// Render out new .plopifyrc.json
-	const plopifyRcData = {
+	const plopifyRcData = EjectedRCSchema.encode({
 		plopifyVersion: packageJson.version,
 		templateLocation: determineTemplateType(templateLocation) === 'remote' ? templateLocation : path.resolve(templateLocation),
 		answers: data
-	};
+	});
 	fs.writeFileSync(path.resolve(outDir, '.plopifyrc.json'), JSON.stringify(plopifyRcData, null, 2));
 
 	logStatus(true);
 	return templateFiles.length + 1;
+};
+
+/**
+ * Updates the given project based on the given updatePolicies and freshly-generated copy.
+ *
+ * @returns stats about what was changed
+ */
+const updateProject = (freshCopyDir: string, projectDir: string, updatePolicies): {added: number, removed: number, modified: number, manualMerge: number} => {
+	// TODO: ...
+	return {added: 0, removed: 0, modified: 0, manualMerge: 0};
 };
 
 program
@@ -176,13 +189,13 @@ program
 	.action(async (template: string, outdir: string, options) => {
 		console.log(header);
 
-		let templateDir = prepareForStaging(template);
+		const {templateDir} = prepareForStaging(template);
 
 		const config = loader(RCSchema).loadConfigFile(path.resolve(templateDir, '.plopifyrc.js'));
 		const answers = await prompt(config.prompts);
 
 		const fullOutDir = path.resolve(outdir);
-		const totalFiles = await generateTemplate(template, templateDir, answers, path.resolve(fullOutDir));
+		const totalFiles = await generateTemplate(template, templateDir, answers, fullOutDir);
 		cleanUpStaging();
 
 		console.log(
@@ -192,13 +205,46 @@ program
 	});
 
 program
-	.command('update <project>')
+	.command('update [project]')
 	.description('Updates an existing project based on changes from the template')
 	.option('-p --prompts', 'prompt the user for input again instead of using the saved answers')
-	.action((project, options) => {
+	.action(async (project, options) => {
 		console.log(header);
 
-		// TODO: ...
+		// Make sure project exists
+		if (!project) project = '.';
+		const projectDir = path.resolve(project);
+		if (!fs.existsSync(projectDir)) {
+			console.log(chalk.red('Error: Cannot find'), chalk.blue.underline(projectDir));
+			process.exit(1);
+		}
+
+		// Make sure the project has a .plopifyrc.json
+		process.stdout.write('Locating saved data... ');
+		const plopifyJson = path.resolve(projectDir, '.plopifyrc.json');
+		const plopifyJsonExists = fs.existsSync(plopifyJson);
+		logStatus(plopifyJsonExists);
+		if (!plopifyJsonExists) {
+			console.log(chalk.red('Error: Cannot find a .plopifyrc.json in'), chalk.blue.underline(projectDir));
+			process.exit(1);
+		}
+
+		// TODO: Make sure the current plopify version is compatible
+		const ejectedConfig = loader(EjectedRCSchema).loadConfigFile(plopifyJson);
+
+		// Prepare for staging
+		const {templateDir, stagingDir} = prepareForStaging(ejectedConfig.templateLocation);
+		const templateConfig = loader(RCSchema).loadConfigFile(path.resolve(templateDir, '.plopifyrc.js'));
+
+		// Re-generate temporary copy for comparison, using saved data
+		let answers = options.prompts ? await prompt(templateConfig.prompts) : ejectedConfig.answers;
+		await generateTemplate(ejectedConfig.templateLocation, templateDir, answers, path.resolve(stagingDir, 'project'));
+
+		// TODO: compare with live project and merge
+
+		cleanUpStaging();
+
+		// TODO: print out stats
 	});
 
 program
