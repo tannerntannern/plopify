@@ -20,10 +20,9 @@ const header = chalk.bold.bgBlue(' ' + packageJson.name + ' ') + chalk.bold.bgYe
 /**
  * Cleans up any left over staging artifacts.  Namely, `.staging-*`.
  */
-// TODO: this is not working
 const cleanUpStaging = () => {
 	fg
-		.sync(path.resolve(__dirname, '.staging-*'), {dot: true})
+		.sync(path.resolve(__dirname, '.staging-*'), {dot: true, onlyDirectories: true})
 		.forEach(file => fse.removeSync(file));
 };
 
@@ -85,8 +84,7 @@ const prepareForStaging = (template: string): {templateDir: string, stagingDir: 
 	let templateDir: string;
 
 	// 0. Clean up any staging data that was orphaned from a previous run
-	// TODO: this is not working
-	const orphanRemains = fg.sync(path.resolve(__dirname, '.staging-*'), {dot: true});
+	const orphanRemains = fg.sync(path.resolve(__dirname, '.staging-*'), {dot: true, onlyDirectories: true});
 	if (orphanRemains.length > 0) {
 		console.log(
 			chalk.yellow('WARNING:'),
