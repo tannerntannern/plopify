@@ -28,6 +28,13 @@ export function union(array1: any[], array2: any[]): any[] {
 }
 
 /**
+ * Computes the difference of the two arrays, namely array1 - array2.
+ */
+export function difference(array1: any[], array2: any): any[] {
+	return array1.filter(el => !array2.includes(el));
+}
+
+/**
  * Logs ✔/✘ for true/false
  */
 export function logStatus(success: boolean) {
