@@ -1,6 +1,8 @@
 import * as t from 'io-ts';
 import {withDefault} from 'rc.ts';
 
+const StringOrArray = t.union([t.string, t.array(t.string)]);
+
 const QuestionType = t.keyof({
 	input: null,
 	confirm: null,
@@ -60,7 +62,7 @@ const Type = t.keyof({
 
 const UpdatePolicyBase = t.type({
 	type: Type,
-	files: t.union([t.string, t.array(t.string)]),
+	files: StringOrArray,
 });
 
 const UpdatePolicy = t.intersection([
@@ -68,7 +70,7 @@ const UpdatePolicy = t.intersection([
 	t.union([
 		t.type({
 			type: t.literal('ignore'),
-			includeGitignore: withDefault(t.boolean, true)
+			includeFileContent: withDefault(StringOrArray, [])
 		}),
 		t.intersection([
 			t.type({
@@ -106,12 +108,12 @@ const UpdatePolicy = t.intersection([
 export let RCSchema = t.type({
 	prompts: t.array(Question),
 	updatePolicies: t.array(UpdatePolicy),
-	hooks: withDefault(t.partial({
-		preGenerate: t.union([t.string, t.array(t.string)]),
-		postGenerate: t.union([t.string, t.array(t.string)]),
-		preUpdate: t.union([t.string, t.array(t.string)]),
-		postUpdate: t.union([t.string, t.array(t.string)])
-	}), {})
+	hooks: t.type({
+		preGenerate: withDefault(StringOrArray, []),
+		postGenerate: withDefault(StringOrArray, []),
+		preUpdate: withDefault(StringOrArray, []),
+		postUpdate: withDefault(StringOrArray, [])
+	})
 });
 
 export let EjectedRCSchema = t.type({

@@ -16,7 +16,7 @@ module.exports = {
 	}],
 	updatePolicies: [{
 		type: 'ignore',
-		includeGitignore: true,
+		includeFileContent: '.gitignore',
 		files: [
 			'package-lock.json',
 			'yarn.lock'

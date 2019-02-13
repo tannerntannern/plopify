@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import * as fse from 'fs-extra';
 import * as path from 'path';
-import * as glob from 'glob';
+import * as fg from 'fast-glob';
 import * as validUrl from 'valid-url';
 import * as hbs from 'handlebars';
 import chalk from 'chalk';
@@ -12,18 +12,20 @@ import {spawnSync} from 'child_process';
 import loader from 'rc.ts';
 
 const packageJson = require('../package.json');
-import {RCSchema, EjectedRCSchema} from './rc.schema';
+import {RCSchema, EjectedRCSchema} from './schemas';
+import {intersection, union, logStatus, unique} from './util';
 
 const header = chalk.bold.bgBlue(' ' + packageJson.name + ' ') + chalk.bold.bgYellow(' v' + packageJson.version + ' ');
-
-// Helper function that logs ✔/✘ for true/false
-const logStatus = (success: boolean) => console.log(success ? chalk.greenBright('✔ ') : chalk.red('✘ '));
 
 /**
  * Cleans up any left over staging artifacts.  Namely, `.staging-*`.
  */
-// TODO: this isn't working anymore
-const cleanUpStaging = () => fse.removeSync(path.resolve(__dirname, '.staging-*'));
+// TODO: this is not working
+const cleanUpStaging = () => {
+	fg
+		.sync(path.resolve(__dirname, '.staging-*'), {dot: true})
+		.forEach(file => fse.removeSync(file));
+};
 
 /**
  * ABORT!
@@ -39,6 +41,41 @@ const abandonShip = () => {
 const determineTemplateType = (template: string) => validUrl.isUri(template) ? 'remote' : 'local';
 
 /**
+ * Attempts to read a file if it exists and returns its string content.  Otherwise returns null.
+ */
+const readFile = (file: string): string | null => {
+	if (fs.existsSync(file)) return fs.readFileSync(file, 'utf8');
+	else return null;
+};
+
+/**
+ * Like readFile(), but returns an array of lines.
+ */
+const readFileLines = (file: string): string[] | null => {
+	const content = readFile(file);
+
+	if (content)
+		return content.split(/[\r\n]+/).filter(line => line.trim() !== '');
+	else
+		return null;
+};
+
+/**
+ * Gets a (relative) list of all the files in a given directory, excluding those in the given ignore list.
+ */
+const getFileList = (dir: string, ignore: string[]) => {
+	const trim = dir.length + 1;
+	const absoluteIgnore = ignore.map(file => path.resolve(dir, file));
+
+	const files = fg.sync(
+		path.resolve(dir, '**/*'),
+		{dot: true, ignore: absoluteIgnore}
+	).map((file: string) => file.substr(trim));
+
+	return files;
+};
+
+/**
  * A hefty helper function that does all the necessary preparations for staging, including setting up a staging
  * directory, pre-screening, and cloning the template repository if necessary.
  *
@@ -48,7 +85,8 @@ const prepareForStaging = (template: string): {templateDir: string, stagingDir: 
 	let templateDir: string;
 
 	// 0. Clean up any staging data that was orphaned from a previous run
-	const orphanRemains = glob.sync(path.resolve(__dirname, '.staging-*'));
+	// TODO: this is not working
+	const orphanRemains = fg.sync(path.resolve(__dirname, '.staging-*'), {dot: true});
 	if (orphanRemains.length > 0) {
 		console.log(
 			chalk.yellow('WARNING:'),
@@ -142,11 +180,10 @@ const generateTemplate = (templateLocation: string, templateDir: string, data: {
 
 	// Collect the relative file paths/names of every file in the template (excluding .plopifyrc.js)
 	const relativeTrim = templateDir.length + 1;
-	const templateFiles = glob.sync(path.resolve(templateDir, '**/*'), {
+	const templateFiles = fg.sync(path.resolve(templateDir, '**/*'), {
 		dot: true,
-		nodir: true,
-		ignore: '**/.plopifyrc.js',
-	}).map(file => file.substr(relativeTrim));
+		ignore: ['**/.plopifyrc.js'],
+	}).map((file: string) => file.substr(relativeTrim));
 
 	// Render out each file
 	for (let file of templateFiles) {
@@ -175,14 +212,51 @@ const generateTemplate = (templateLocation: string, templateDir: string, data: {
  *
  * @returns stats about what was changed
  */
-const updateProject = (freshCopyDir: string, projectDir: string, updatePolicies): {added: number, removed: number, modified: number, manualMerge: number} => {
-	// TODO: ...
-	return {added: 0, removed: 0, modified: 0, manualMerge: 0};
+const updateProject = async (newDir: string, oldDir: string, updatePolicies): Promise<{added: number, removed: number, modified: number, manualMerge: number}> => {
+	return new Promise(resolve => {
+		// Before we start comparing files, check the policies for anything that should be ignored
+		const ignore = unique(
+			updatePolicies
+				.filter(policy => policy.type === 'ignore')
+				.map(policy => {
+					const files = typeof policy.files === 'string' ? [policy.files] : policy.files;
+
+					// We may need to include content from .gitignore or similar
+					const filesWithContent: string[] = typeof policy.includeFileContent === 'string' ? [policy.includeFileContent] : policy.includeFileContent;
+					const moreFiles = filesWithContent
+						.map(file => {
+							// We don't know whether the file content is new, old, or present in both, so we can only load both
+							// and merge the lines via intersection
+							const newContent = readFileLines(path.resolve(newDir, file)) || [];
+							const oldContent = readFileLines(path.resolve(oldDir, file)) || [];
+
+							return intersection(newContent, oldContent);
+						})
+						.reduce((all, some) => all.concat(some));
+
+					return union(files, moreFiles);
+				})
+				.reduce((allFiles, moreFiles) => allFiles.concat(moreFiles))
+		);
+
+		ignore.push('.plopifyrc.js');
+
+		// Next, generate a list of all the relevant files from each project copy
+		const newFiles = getFileList(newDir, ignore);
+		const oldFiles = getFileList(oldDir, ignore);
+
+		// TODO: ...
+
+		resolve({added: 0, removed: 0, modified: 0, manualMerge: 0});
+	});
 };
 
 program
 	.version(packageJson.version, '-v, --version');
 
+// TODO: use auto-complete inquirer prompt with the github api to interactively search for existing templates
+//  (https://github.com/mokkabonna/inquirer-autocomplete-prompt)
+//  (https://github.com/octokit/rest.js/)
 program
 	.command('gen <template> <outdir>')
 	.description('Generates a new project based on the given template')
@@ -198,6 +272,7 @@ program
 		const totalFiles = await generateTemplate(template, templateDir, answers, fullOutDir);
 		cleanUpStaging();
 
+		console.log();
 		console.log(
 			chalk.bold.bgGreen(' SUCCESS '),
 			chalk.yellow('+' + totalFiles), 'files added at', chalk.underline.blue(fullOutDir)
@@ -237,14 +312,25 @@ program
 		const templateConfig = loader(RCSchema).loadConfigFile(path.resolve(templateDir, '.plopifyrc.js'));
 
 		// Re-generate temporary copy for comparison, using saved data
-		let answers = options.prompts ? await prompt(templateConfig.prompts) : ejectedConfig.answers;
-		await generateTemplate(ejectedConfig.templateLocation, templateDir, answers, path.resolve(stagingDir, 'project'));
+		const answers = options.prompts ? await prompt(templateConfig.prompts) : ejectedConfig.answers;
+		const stagingCopyDir = path.resolve(stagingDir, 'project');
+		await generateTemplate(ejectedConfig.templateLocation, templateDir, answers, stagingCopyDir);
 
-		// TODO: compare with live project and merge
+		// Compare with live project and merge
+		const stats = await updateProject(stagingCopyDir, projectDir, templateConfig.updatePolicies);
 
 		cleanUpStaging();
 
-		// TODO: print out stats
+		console.log();
+		console.log(
+			(stats.added + stats.removed + stats.modified + stats.manualMerge) ?
+				chalk.bold.bgGreen(' SUCCESS ') :
+				(chalk.bold.bgYellow(' SUCCESS ') + ' (no changes)')
+		);
+		if (stats.added) console.log(chalk.yellow('+ ' + stats.added), 'files added');
+		if (stats.removed) console.log(chalk.yellow('- ' + stats.removed), 'files removed');
+		if (stats.modified) console.log(chalk.yellow('± ' + stats.modified), 'files modified');
+		if (stats.manualMerge) console.log(chalk.yellowBright('? ' + stats.manualMerge), 'files need manual merging');
 	});
 
 program
@@ -256,12 +342,13 @@ program
 
 		const outDir = path.resolve(dir);
 		const templateDir = path.resolve(__dirname, '../templates/project-template/');
-		const totalFiles = glob.sync(path.resolve(templateDir, '**/*'), {dot: true, nodir: true}).length;
+		const totalFiles = fg.sync(path.resolve(templateDir, '**/*'), {dot: true}).length;
 
 		fse.mkdirpSync(outDir);
 		fse.copySync(templateDir, outDir);
 
 		logStatus(true);
+		console.log();
 		console.log(
 			chalk.bold.bgGreen(' SUCCESS '),
 			chalk.yellow('+' + totalFiles), 'files added at', chalk.underline.blue(outDir)
