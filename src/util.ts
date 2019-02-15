@@ -35,6 +35,18 @@ export function difference(array1: any[], array2: any): any[] {
 }
 
 /**
+ * Not sure if you have null, a string, or an array of strings?  Now it's just an array of strings.
+ */
+export function arrayify(input: null | string | string[]): string[] {
+	if (input === null)
+		return [];
+	if (typeof input === 'string')
+		return [input];
+	else
+		return input;
+}
+
+/**
  * Logs ✔/✘ for true/false
  */
 export function logStatus(success: boolean) {

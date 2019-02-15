@@ -3,18 +3,25 @@ import * as fs from 'fs';
 import * as fse from 'fs-extra';
 import * as path from 'path';
 import * as fg from 'fast-glob';
+import * as md5 from 'md5-file';
 import * as validUrl from 'valid-url';
 import * as hbs from 'handlebars';
 import chalk from 'chalk';
-import {prompt} from 'inquirer';
+import * as inquirer from 'inquirer';
+import * as inquirerEmoji from 'inquirer-emoji';
 import * as program from 'commander';
 import {spawnSync} from 'child_process';
+import {TypeOf} from 'io-ts';
 import loader from 'rc.ts';
 
 const packageJson = require('../package.json');
 import {RCSchema, EjectedRCSchema} from './schemas';
-import {intersection, union, logStatus, unique} from './util';
+import {unique, intersection, union, difference, arrayify, logStatus} from './util';
 
+// Load the inquirer-emoji plugin
+inquirer.registerPrompt('emoji', inquirerEmoji);
+
+// A pretty header to print at the beginning of all plopify commands
 const header = chalk.bold.bgBlue(' ' + packageJson.name + ' ') + chalk.bold.bgYellow(' v' + packageJson.version + ' ');
 
 /**
@@ -66,10 +73,9 @@ const getFileList = (dir: string, ignore: string[]) => {
 	const trim = dir.length + 1;
 	const absoluteIgnore = ignore.map(file => path.resolve(dir, file));
 
-	const files = fg.sync(
-		path.resolve(dir, '**/*'),
-		{dot: true, ignore: absoluteIgnore}
-	).map((file: string) => file.substr(trim));
+	const files = fg
+		.sync(path.resolve(dir, '**/*'), {dot: true, ignore: absoluteIgnore})
+		.map((file: string) => file.substr(trim));
 
 	return files;
 };
@@ -177,11 +183,7 @@ const generateTemplate = (templateLocation: string, templateDir: string, data: {
 	process.stdout.write('Generating project... ');
 
 	// Collect the relative file paths/names of every file in the template (excluding .plopifyrc.js)
-	const relativeTrim = templateDir.length + 1;
-	const templateFiles = fg.sync(path.resolve(templateDir, '**/*'), {
-		dot: true,
-		ignore: ['**/.plopifyrc.js'],
-	}).map((file: string) => file.substr(relativeTrim));
+	const templateFiles = getFileList(templateDir, ['.plopifyrc.js']);
 
 	// Render out each file
 	for (let file of templateFiles) {
@@ -206,44 +208,58 @@ const generateTemplate = (templateLocation: string, templateDir: string, data: {
 };
 
 /**
+ * Given an UpdatePolicy, returns an array of all the files matched by pattern and patternFromFile.
+ */
+const getPolicyFileList = (newDir: string, oldDir: string, policy: TypeOf<typeof RCSchema>['updatePolicies'][number]): string[] => {
+	const pattern = arrayify(policy.pattern);
+
+	// We may need to include content from .gitignore or similar
+	const patternInFile: string[] = arrayify(policy.patternFromFile);
+	const moreFiles = patternInFile
+		.map(file => {
+			// TODO: figure out if this even makes sense, or if the new content should just be taken
+			// We don't know whether the file content is new, old, or present in both, so we can only load both
+			// and merge the lines via intersection
+			const newContent = readFileLines(path.resolve(newDir, file)) || [];
+			const oldContent = readFileLines(path.resolve(oldDir, file)) || [];
+
+			return intersection(newContent, oldContent);
+		})
+		.reduce((all, some) => all.concat(some));
+
+	return union(pattern, moreFiles);
+};
+
+/**
  * Updates the given project based on the given updatePolicies and freshly-generated copy.
  *
  * @returns stats about what was changed
  */
-const updateProject = async (newDir: string, oldDir: string, updatePolicies): Promise<{added: number, removed: number, modified: number, manualMerge: number}> => {
+const updateProject = async (newDir: string, oldDir: string, updatePolicies: TypeOf<typeof RCSchema>['updatePolicies']): Promise<{added: number, removed: number, modified: number, manualMerge: number}> => {
 	return new Promise(resolve => {
 		// Before we start comparing files, check the policies for anything that should be ignored
-		const ignore = unique(
-			updatePolicies
-				.filter(policy => policy.type === 'ignore')
-				.map(policy => {
-					const files = typeof policy.files === 'string' ? [policy.files] : policy.files;
-
-					// We may need to include content from .gitignore or similar
-					const filesWithContent: string[] = typeof policy.includeFileContent === 'string' ? [policy.includeFileContent] : policy.includeFileContent;
-					const moreFiles = filesWithContent
-						.map(file => {
-							// We don't know whether the file content is new, old, or present in both, so we can only load both
-							// and merge the lines via intersection
-							const newContent = readFileLines(path.resolve(newDir, file)) || [];
-							const oldContent = readFileLines(path.resolve(oldDir, file)) || [];
-
-							return intersection(newContent, oldContent);
-						})
-						.reduce((all, some) => all.concat(some));
-
-					return union(files, moreFiles);
-				})
-				.reduce((allFiles, moreFiles) => allFiles.concat(moreFiles))
-		);
+		let ignore = updatePolicies
+			.filter(policy => policy.action === 'ignore' && policy.granularity === 'wholeFile')
+			.map(policy => getPolicyFileList(newDir, oldDir, policy))
+			.reduce((allFiles, moreFiles) => allFiles.concat(moreFiles));
 
 		ignore.push('.plopifyrc.js');
 
-		// Next, generate a list of all the relevant files from each project copy
+		// Next, generate lists of all the file changes we need to deal with
 		const newFiles = getFileList(newDir, ignore);
 		const oldFiles = getFileList(oldDir, ignore);
+		const addedFiles = difference(newFiles, oldFiles);
+		const removedFiles = difference(oldFiles, newFiles);
+		const modifiedFiles = intersection(newFiles, oldFiles).filter(file => {
+			const newHash = md5.sync(path.resolve(newDir, file));
+			const oldHash = md5.sync(path.resolve(oldDir, file));
 
-		// TODO: ...
+			return newHash !== oldHash;
+		});
+
+		console.log('added:', addedFiles);
+		console.log('removed:', removedFiles);
+		console.log('modified:', modifiedFiles);
 
 		resolve({added: 0, removed: 0, modified: 0, manualMerge: 0});
 	});
@@ -264,7 +280,7 @@ program
 		const {templateDir} = prepareForStaging(template);
 
 		const config = loader(RCSchema).loadConfigFile(path.resolve(templateDir, '.plopifyrc.js'));
-		const answers = await prompt(config.prompts);
+		const answers = await inquirer.prompt(config.prompts);
 
 		const fullOutDir = path.resolve(outdir);
 		const totalFiles = await generateTemplate(template, templateDir, answers, fullOutDir);
@@ -310,7 +326,8 @@ program
 		const templateConfig = loader(RCSchema).loadConfigFile(path.resolve(templateDir, '.plopifyrc.js'));
 
 		// Re-generate temporary copy for comparison, using saved data
-		const answers = options.prompts ? await prompt(templateConfig.prompts) : ejectedConfig.answers;
+		// TODO: detect added or removed questions
+		const answers = options.prompts ? await inquirer.prompt(templateConfig.prompts) : ejectedConfig.answers;
 		const stagingCopyDir = path.resolve(stagingDir, 'project');
 		await generateTemplate(ejectedConfig.templateLocation, templateDir, answers, stagingCopyDir);
 
