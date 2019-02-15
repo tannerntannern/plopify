@@ -4,6 +4,10 @@ module.exports = {
 		message: 'Project name?',
 		validate: (input) => /^[a-z0-9\-]+$/.test(input) ? true : 'Must be a dash-case-name'
 	}, {
+		name: 'project_emoji',
+		type: 'emoji',
+		message: 'Project emoji?'
+	}, {
 		name: 'project_repository',
 		message: 'Project repository?'
 	}, {
@@ -15,12 +19,12 @@ module.exports = {
 		validate: (input) => /^[^@]+@[^.]+\..+$/.test(input) ? true : 'Please enter a valid email address'
 	}],
 	updatePolicies: [{
-		type: 'ignore',
-		includeFileContent: '.gitignore',
-		files: [
-			'package-lock.json',
-			'yarn.lock'
-		]
+		patternFromFile: '.gitignore',
+		pattern: [
+			'yarn.lock',
+			'CHANGELOG.md'
+		],
+		action: 'ignore'
 	}],
 	hooks: {
 

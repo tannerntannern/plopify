@@ -1,11 +1,11 @@
-<!-- BLOCK header -->
-# {{project_name}}
+<!-- <BLOCK header> -->
+# {{project_emoji}} {{project_name}}
 [![plopify badge](https://badgen.net/badge/plopify/enabled/green)](https://npmjs.com/package/plopify)
-<!-- /BLOCK -->
+<!-- </BLOCK> -->
 
 Content goes here
 
-<!-- BLOCK footer -->
+<!-- <BLOCK footer> -->
 # Author
 {{author_name}} <{{author_email}}>
-<!-- /BLOCK --->
+<!-- </BLOCK> --->

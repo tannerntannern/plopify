@@ -11,9 +11,10 @@ const QuestionType = t.keyof({
 	expand: null,
 	checkbox: null,
 	password: null,
-	editor: null
+	editor: null,
+	// Plugins
+	emoji: null,
 });
-
 const QuestionChoice = t.union([
 	t.string,
 	t.type({
@@ -22,7 +23,6 @@ const QuestionChoice = t.union([
 		short: t.string
 	}),
 ]);
-
 const Question = t.intersection([
 	t.type({
 		name: t.string,
@@ -44,64 +44,52 @@ const Question = t.intersection([
 	})
 ]);
 
-const ChangeHandler = t.keyof({
+const ChangeType = t.keyof({
+	new: null,
+	removed: null,
+	modified: null
+});
+const Changes = t.union([t.literal('any'), ChangeType, t.array(ChangeType)]);
+const Action = t.keyof({
 	accept: null,
-	reject: null,
-	ask: null,
-	askAccept: null,
-	askReject: null
-});
-
-const Type = t.keyof({
 	ignore: null,
-	wholeFile: null,
-	lines: null,
-	jsonKeys: null,
-	blocks: null
+	ask: null,
 });
-
-const UpdatePolicyBase = t.type({
-	type: Type,
-	files: StringOrArray,
+const Granularity = t.keyof({
+	wholeFile: null,
+	blocks: null,
+	lines: null,
+	jsonKeys: null
 });
 
 const UpdatePolicy = t.intersection([
-	UpdatePolicyBase,
+	t.type({
+		pattern: withDefault(StringOrArray, '**/*'),
+		patternFromFile: withDefault(StringOrArray, null),
+		type: withDefault(Changes, 'any'),
+		action: withDefault(Action, 'ask'),
+	}),
 	t.union([
 		t.type({
-			type: t.literal('ignore'),
-			includeFileContent: withDefault(StringOrArray, [])
+			granularity: withDefault(t.keyof({wholeFile: null, lines: null}), 'wholeFile')
 		}),
-		t.intersection([
-			t.type({
-				defaultHandler: withDefault(ChangeHandler, 'ask')
-			}),
-			t.union([
-				t.type({
-					type: t.keyof({
-						wholeFile: null,
-						lines: null,
+		t.type({
+			granularity: t.literal('blocks'),
+			exceptions: withDefault(t.record(t.string, Action), {})
+		}),
+		t.type({
+			granularity: t.literal('jsonKeys'),
+			exceptions: withDefault(t.record(
+				t.string,
+				t.union([
+					Action,
+					t.type({
+						action: Action,
+						recursive: withDefault(t.boolean, false)
 					})
-				}),
-				t.type({
-					type: t.literal('jsonKeys'),
-					handlers: withDefault(t.record(
-						t.string,
-						t.union([
-							ChangeHandler,
-							t.type({
-								handler: ChangeHandler,
-								children: withDefault(t.boolean, false)
-							})
-						])
-					), {})
-				}),
-				t.type({
-					type: t.literal('blocks'),
-					handlers: withDefault(t.record(t.string, ChangeHandler), {})
-				})
-			])
-		])
+				])
+			), {})
+		})
 	])
 ]);
 
