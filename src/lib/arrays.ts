@@ -1,10 +1,4 @@
 /**
- * Collection of utility functions.  If this file grows large enough, I'll just include lodash, but that doesn't seem
- * necessary at the moment.
- */
-import chalk from 'chalk';
-
-/**
  * Filters out array duplicates.
  */
 export function unique(array: any[]): any[] {
@@ -44,11 +38,4 @@ export function arrayify(input: null | string | string[]): string[] {
 		return [input];
 	else
 		return input;
-}
-
-/**
- * Logs ✔/✘ for true/false
- */
-export function logStatus(success: boolean) {
-	console.log(success ? chalk.greenBright('✔ ') : chalk.red('✘ '));
 }

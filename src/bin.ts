@@ -16,13 +16,14 @@ import loader from 'rc.ts';
 
 const packageJson = require('../package.json');
 import {RCSchema, EjectedRCSchema} from './schemas';
-import {unique, intersection, union, difference, arrayify, logStatus} from './util';
+import {intersection, union, difference, arrayify} from './lib/arrays';
+import {readFile, readFileLines, getFileList} from './lib/files';
 
 // Load the inquirer-emoji plugin
 inquirer.registerPrompt('emoji', inquirerEmoji);
 
 // A pretty header to print at the beginning of all plopify commands
-const header = chalk.bold.bgBlue(' ' + packageJson.name + ' ') + chalk.bold.bgYellow(' v' + packageJson.version + ' ');
+const header = chalk.bold.bgBlue(` ${packageJson.name} `) + chalk.bold.bgYellow(` v${packageJson.version} `);
 
 /**
  * Cleans up any left over staging artifacts.  Namely, `.staging-*`.
@@ -42,43 +43,16 @@ const abandonShip = () => {
 };
 
 /**
+ * Logs ✔/✘ for true/false
+ */
+function logStatus(success: boolean) {
+	console.log(success ? chalk.greenBright('✔ ') : chalk.red('✘ '));
+}
+
+/**
  * Quick utility for determining whether the given template is local or remote.
  */
 const determineTemplateType = (template: string) => validUrl.isUri(template) ? 'remote' : 'local';
-
-/**
- * Attempts to read a file if it exists and returns its string content.  Otherwise returns null.
- */
-const readFile = (file: string): string | null => {
-	if (fs.existsSync(file)) return fs.readFileSync(file, 'utf8');
-	else return null;
-};
-
-/**
- * Like readFile(), but returns an array of lines.
- */
-const readFileLines = (file: string): string[] | null => {
-	const content = readFile(file);
-
-	if (content)
-		return content.split(/[\r\n]+/).filter(line => line.trim() !== '');
-	else
-		return null;
-};
-
-/**
- * Gets a (relative) list of all the files in a given directory, excluding those in the given ignore list.
- */
-const getFileList = (dir: string, ignore: string[]) => {
-	const trim = dir.length + 1;
-	const absoluteIgnore = ignore.map(file => path.resolve(dir, file));
-
-	const files = fg
-		.sync(path.resolve(dir, '**/*'), {dot: true, ignore: absoluteIgnore})
-		.map((file: string) => file.substr(trim));
-
-	return files;
-};
 
 /**
  * A hefty helper function that does all the necessary preparations for staging, including setting up a staging

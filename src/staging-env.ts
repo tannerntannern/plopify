@@ -1,3 +1,8 @@
+/**
+ * TODO: ...
+ */
 export const StagingEnv = {
-	// TODO: ...
+	cleanUp: () => {
+		// TODO: ...
+	}
 };
