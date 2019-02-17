@@ -59,7 +59,7 @@ const Granularity = t.keyof({
 const UpdatePolicy = t.intersection([
 	t.type({
 		pattern: withDefault(StringOrArray, '**/*'),
-		patternFromFile: withDefault(StringOrArray, null),
+		patternFromFile: withDefault(StringOrArray, []),
 		action: withDefault(Action, 'ask'),
 	}),
 	t.union([
