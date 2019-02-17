@@ -105,6 +105,7 @@ export let EjectedRCSchema = t.type({
 
 export let GlobalConfigSchema = t.type({
 	password: withDefault(t.string, ''),
+	githubUsername: withDefault(t.string, ''),
 	githubPersonalAccessToken: withDefault(t.string, ''),
 	// TODO: add more tokens as support is added
 });
