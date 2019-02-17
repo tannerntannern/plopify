@@ -186,7 +186,7 @@ export default function (base: string) {
 		if (!value) {
 			value = (await prompt([{
 				name: 'value',
-				message: 'Enter a value for ' + chalk.yellow(key) + ':'
+				message: 'Enter a value for ' + chalk.yellow(unCamel(key)) + ':'
 			}]) as any).value;
 		}
 
