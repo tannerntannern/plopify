@@ -44,12 +44,6 @@ const Question = t.intersection([
 	})
 ]);
 
-const ChangeType = t.keyof({
-	new: null,
-	removed: null,
-	modified: null
-});
-const Changes = t.union([t.literal('any'), ChangeType, t.array(ChangeType)]);
 const Action = t.keyof({
 	accept: null,
 	ignore: null,
@@ -66,7 +60,6 @@ const UpdatePolicy = t.intersection([
 	t.type({
 		pattern: withDefault(StringOrArray, '**/*'),
 		patternFromFile: withDefault(StringOrArray, null),
-		type: withDefault(Changes, 'any'),
 		action: withDefault(Action, 'ask'),
 	}),
 	t.union([
@@ -108,4 +101,10 @@ export let EjectedRCSchema = t.type({
 	plopifyVersion: t.string,
 	templateLocation: t.string,
 	answers: t.record(t.string, t.string)
+});
+
+export let GlobalConfigSchema = t.type({
+	password: withDefault(t.string, ''),
+	githubPersonalAccessToken: withDefault(t.string, ''),
+	// TODO: add more tokens as support is added
 });

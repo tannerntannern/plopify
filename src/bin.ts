@@ -5,19 +5,21 @@ import * as path from 'path';
 import * as fg from 'fast-glob';
 import * as md5 from 'md5-file';
 import * as validUrl from 'valid-url';
-import * as hbs from 'handlebars';
 import chalk from 'chalk';
 import * as inquirer from 'inquirer';
 import * as inquirerEmoji from 'inquirer-emoji';
-import * as program from 'commander';
+import {Command} from 'commander';
 import {spawnSync} from 'child_process';
 import {TypeOf} from 'io-ts';
 import loader from 'rc.ts';
 
 const packageJson = require('../package.json');
-import {RCSchema, EjectedRCSchema} from './schemas';
+import {RCSchema, EjectedRCSchema, GlobalConfigSchema} from './schemas';
 import {intersection, union, difference, arrayify} from './lib/arrays';
 import {readFile, readFileLines, getFileList} from './lib/files';
+import {renderString} from './lib/templates';
+import {runHooks} from './lib/hooks';
+import globalConfig from './lib/global-config';
 
 // Load the inquirer-emoji plugin
 inquirer.registerPrompt('emoji', inquirerEmoji);
@@ -144,13 +146,6 @@ const prepareForStaging = (template: string): {templateDir: string, stagingDir: 
 };
 
 /**
- * Simple function that uses handlebars to render a template string with data.
- */
-const renderString = (templateString: string, data: {[key: string]: any}): string => {
-	return hbs.compile(templateString)(data);
-};
-
-/**
  * Takes a templateDir and generates a new instance to outDir using the given data.
  */
 const generateTemplate = (templateLocation: string, templateDir: string, data: {[key: string]: any}, outDir: string): number => {
@@ -239,12 +234,34 @@ const updateProject = async (newDir: string, oldDir: string, updatePolicies: Typ
 	});
 };
 
+const program = new Command();
 program
 	.version(packageJson.version, '-v, --version');
 
+program
+	.command('init <dir>')
+	.description('Initializes a project template that can be used to generate other projects')
+	.action((dir, options) => {
+		console.log(header);
+		process.stdout.write('Copying files... ');
+
+		const outDir = path.resolve(dir);
+		const templateDir = path.resolve(__dirname, '../templates/project-template/');
+		const totalFiles = fg.sync(path.resolve(templateDir, '**/*'), {dot: true}).length;
+
+		fse.mkdirpSync(outDir);
+		fse.copySync(templateDir, outDir);
+
+		logStatus(true);
+		console.log();
+		console.log(
+			chalk.bold.bgGreen(' SUCCESS '),
+			chalk.yellow('+' + totalFiles), 'files added at', chalk.underline.blue(outDir)
+		);
+	});
+
 // TODO: use auto-complete inquirer prompt with the github api to interactively search for existing templates
 //  (https://github.com/mokkabonna/inquirer-autocomplete-prompt)
-//  (https://github.com/octokit/rest.js/)
 program
 	.command('gen <template> <outdir>')
 	.description('Generates a new project based on the given template')
@@ -255,6 +272,8 @@ program
 
 		const config = loader(RCSchema).loadConfigFile(path.resolve(templateDir, '.plopifyrc.js'));
 		const answers = await inquirer.prompt(config.prompts);
+
+		runHooks(arrayify(config.hooks.preGenerate), answers as any);
 
 		const fullOutDir = path.resolve(outdir);
 		const totalFiles = await generateTemplate(template, templateDir, answers, fullOutDir);
@@ -323,25 +342,23 @@ program
 	});
 
 program
-	.command('init <dir>')
-	.description('Initializes a project template that can be used to generate other projects')
-	.action((dir, options) => {
-		console.log(header);
-		process.stdout.write('Copying files... ');
+	.command('config <action> [key] [value]')
+	.description('Displays or modifies the content of plopify\'s global config data')
+	.action(async (action, key, value) => {
+		if (action !== 'where') console.log(header);
 
-		const outDir = path.resolve(dir);
-		const templateDir = path.resolve(__dirname, '../templates/project-template/');
-		const totalFiles = fg.sync(path.resolve(templateDir, '**/*'), {dot: true}).length;
+		const actions = ['init', 'view', 'where', 'flush', 'set'];
+		if (actions.indexOf(action) === -1) {
+			console.log(chalk.red('Invalid Operation: the action argument must be one of the following: ' + actions.join(', ')));
+			process.exit(1);
+		}
 
-		fse.mkdirpSync(outDir);
-		fse.copySync(templateDir, outDir);
-
-		logStatus(true);
-		console.log();
-		console.log(
-			chalk.bold.bgGreen(' SUCCESS '),
-			chalk.yellow('+' + totalFiles), 'files added at', chalk.underline.blue(outDir)
-		);
+		try {
+			await globalConfig(__dirname)[action](key, value);
+		} catch (e) {
+			console.log(chalk.red('Error:'), e.message);
+			process.exit(1);
+		}
 	});
 
 program.parse(process.argv);
