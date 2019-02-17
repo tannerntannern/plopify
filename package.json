@@ -38,6 +38,7 @@
     "io-ts": "^1.8.1",
     "md5-file": "^4.0.0",
     "rc.ts": "^1.2.0",
+    "string-argv": "^0.1.1",
     "valid-url": "^1.0.9"
   },
   "devDependencies": {

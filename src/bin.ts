@@ -152,7 +152,7 @@ const generateTemplate = (templateLocation: string, templateDir: string, data: {
 	process.stdout.write('Generating project... ');
 
 	// Collect the relative file paths/names of every file in the template (excluding .plopifyrc.js)
-	const templateFiles = getFileList(templateDir, ['.plopifyrc.js']);
+	const templateFiles = getFileList(templateDir, ['.plopifyrc.js', '.git/', '.idea/']);
 
 	// Render out each file
 	for (let file of templateFiles) {
@@ -226,6 +226,8 @@ const updateProject = async (newDir: string, oldDir: string, updatePolicies: Typ
 			return newHash !== oldHash;
 		});
 
+		// TODO: ...
+
 		console.log('added:', addedFiles);
 		console.log('removed:', removedFiles);
 		console.log('modified:', modifiedFiles);
@@ -271,13 +273,17 @@ program
 		const {templateDir} = prepareForStaging(template);
 
 		const config = loader(RCSchema).loadConfigFile(path.resolve(templateDir, '.plopifyrc.js'));
-		const answers = await inquirer.prompt(config.prompts);
-
-		runHooks(arrayify(config.hooks.preGenerate), answers as any);
+		const answers: {[key: string]: any} = await inquirer.prompt(config.prompts);
 
 		const fullOutDir = path.resolve(outdir);
+		fse.mkdirpSync(fullOutDir);
+
+		await runHooks(arrayify(config.hooks.preGenerate), answers, fullOutDir);
+
 		const totalFiles = await generateTemplate(template, templateDir, answers, fullOutDir);
 		cleanUpStaging();
+
+		await runHooks(arrayify(config.hooks.postGenerate), answers, fullOutDir);
 
 		console.log();
 		console.log(
@@ -318,16 +324,18 @@ program
 		const {templateDir, stagingDir} = prepareForStaging(ejectedConfig.templateLocation);
 		const templateConfig = loader(RCSchema).loadConfigFile(path.resolve(templateDir, '.plopifyrc.js'));
 
-		// Re-generate temporary copy for comparison, using saved data
 		// TODO: detect added or removed questions
-		const answers = options.prompts ? await inquirer.prompt(templateConfig.prompts) : ejectedConfig.answers;
+		const answers: {[key: string]: any} = options.prompts ? await inquirer.prompt(templateConfig.prompts) : ejectedConfig.answers;
 		const stagingCopyDir = path.resolve(stagingDir, 'project');
+
+		// await runHooks(arrayify(templateConfig.hooks.preUpdate), answers, projectDir);
+
+		// Re-generate temporary copy for comparison, then compare with live project and merge
 		await generateTemplate(ejectedConfig.templateLocation, templateDir, answers, stagingCopyDir);
-
-		// Compare with live project and merge
 		const stats = await updateProject(stagingCopyDir, projectDir, templateConfig.updatePolicies);
-
 		cleanUpStaging();
+
+		// await runHooks(arrayify(templateConfig.hooks.postUpdate), answers, projectDir);
 
 		console.log();
 		console.log(

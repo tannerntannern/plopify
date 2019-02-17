@@ -1,7 +1,16 @@
+import * as path from 'path';
+import chalk from 'chalk';
 import axios from 'axios';
+import * as stringArgv from 'string-argv';
 import {Command} from 'commander';
 import {spawn} from 'child_process';
+import globalConfig from './global-config';
+
+import {confirm} from './prompts';
 import {renderString} from './templates';
+
+// Where the dist directory is from this file
+const distDir = path.resolve(__dirname, '..');
 
 /**
  * Executes a shell command and returns a Promise.  If the promise resolves, the command was successful; if it is
@@ -25,18 +34,25 @@ const plopifyCommands: {[command: string]: {args: string, options: string[], act
 	'github-init': {
 		args: '<name>',
 		options: ['-p --private'],
-		action: (name, options) => {
-			return axios.request({
+		action: async (name, options) => {
+			const token = await globalConfig(distDir).read('githubPersonalAccessToken');
+
+			const status = (await axios.request({
 				method: 'POST',
 				url: 'https://api.github.com/user/repos',
 				headers: {
-					'Authorization': 'token ' + 'dummy-value',
+					'Authorization': 'token ' + token,
 				},
 				data: {
 					name: name,
 					private: options.private
 				}
-			});
+			})).status;
+
+			if (status === 201)
+				return;
+			else
+				throw new Error('Unable to create remote repository');  // TODO: add more detailed message
 		}
 	}
 };
@@ -52,11 +68,32 @@ for (let command in plopifyCommands) {
 }
 
 /**
- * Processes the given hooks, returning true if all pass or an Error if one of them fails.
+ * Processes the given hooks, returning true if all pass.
  */
-export function runHooks(hooks: string[], answers: {[key: string]: string}) {
+export async function runHooks(hooks: string[], answers: {[key: string]: string}, cwd: string): Promise<boolean> {
 	// Render any hooks that might have used {{prompt_answers}}
 	hooks = hooks.map(hook => renderString(hook, answers));
 
-	// TODO: ...
+	const plopifyPrefix = 'plopify ';
+	for (let hook of hooks) {
+		console.log(chalk.yellow('Running hook: `' + hook + '`...'));
+
+		try {
+			if (hook.startsWith(plopifyPrefix)) {
+				// TODO: figure out how to capture this one
+				await program.parse(stringArgv(hook));
+			} else {
+				await shellCommand(hook, cwd);
+			}
+		} catch (e) {
+			console.log(e.message);
+			console.log(chalk.red('Error in hook `' + hook + '`'));
+			if (!await confirm('Would you like to ignore this error and continue?')) {
+				return false;
+			}
+		}
+	}
+
+	// If we make it here, everything was successful
+	return true;
 }
