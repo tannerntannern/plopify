@@ -9,6 +9,13 @@ import globalConfig from './global-config';
 import {confirm} from './prompts';
 import {renderString} from './templates';
 
+// Commander.js doesn't appear to respect async functions, so we have to use these external resolve/reject references to
+// make it work
+const promiseHackery: {resolve: (...args) => any, reject: (...args) => any} = {
+	resolve: null,
+	reject: null
+};
+
 // Where the dist directory is from this file
 const distDir = path.resolve(__dirname, '..');
 
@@ -37,22 +44,36 @@ const plopifyCommands: {[command: string]: {args: string, options: string[], act
 		action: async (name, options) => {
 			const token = await globalConfig(distDir).read('githubPersonalAccessToken');
 
-			const status = (await axios.request({
-				method: 'POST',
-				url: 'https://api.github.com/user/repos',
-				headers: {
-					'Authorization': 'token ' + token,
-				},
-				data: {
-					name: name,
-					private: options.private
-				}
-			})).status;
+			try {
+				console.log('Attempting to create repository:', name);
 
-			if (status === 201)
-				return;
-			else
-				throw new Error('Unable to create remote repository');  // TODO: add more detailed message
+				let res = await (axios.request({
+					method: 'POST',
+					url: 'https://api.github.com/user/repos',
+					headers: {
+						'Authorization': 'token ' + token,
+					},
+					data: {
+						name: name,
+						private: options.private
+					}
+				}));
+
+				console.log('Successfully created', chalk.blue.underline(res.data.clone_url));
+
+				promiseHackery.resolve();
+			} catch (e) {
+				if (e.response) {
+					process.stdout.write(chalk.bgRed.bold(' ' + e.response.status + ' ') + ' ');
+					switch(e.response.status) {
+					case 401:
+						console.log('This likely means your GitHub personal access token is invalid.');
+						break;
+					}
+				}
+
+				promiseHackery.reject(e);
+			}
 		}
 	}
 };
@@ -80,8 +101,19 @@ export async function runHooks(hooks: string[], answers: {[key: string]: string}
 
 		try {
 			if (hook.startsWith(plopifyPrefix)) {
-				// TODO: figure out how to capture this one
-				await program.parse(stringArgv(hook));
+				// Convert the command string into an argv format that would normally be passed to program.parse()
+				const argv = stringArgv(hook.substr(plopifyPrefix.length));
+				argv.unshift('node', 'bin');
+
+				// Wrap the program parsing in a promise, injecting the resolve and reject functions into an object that
+				// the .action(function) has access to.  It sucks this way, but commander doesn't respect async
+				// functions at this time.
+				await (new Promise(async (resolve, reject) => {
+					promiseHackery.resolve = resolve;
+					promiseHackery.reject = reject;
+
+					program.parse(argv);
+				}));
 			} else {
 				await shellCommand(hook, cwd);
 			}
