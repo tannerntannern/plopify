@@ -26,7 +26,7 @@ export const readFileLines = (file: string): string[] | null => {
  * Gets a (relative) list of all the files in a given directory, excluding those in the given ignore list.
  */
 export const getFileList = (dir: string, ignore: string[]) => {
-	const trim = dir.length + 1;
+	const trim = path.resolve(dir).length + 1; // path must be resolved because the input dir might not be
 	const absoluteIgnore = ignore.map(file => path.resolve(dir, file));
 
 	const files = fg
