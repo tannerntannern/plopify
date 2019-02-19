@@ -7,36 +7,29 @@ import loader from 'rc.ts';
 import {prompt} from 'inquirer';
 import chalk from 'chalk';
 
-import {GlobalConfigSchema} from '../schemas';
-import {confirm, getPassword, collectPassword} from './prompts';
+import {VisibleGlobalConfigSchema, GlobalConfigSchema} from '../schemas';
+import {confirm, guessAndCheckPassword, collectPassword} from './prompts';
 
 type Schema = TypeOf<typeof GlobalConfigSchema>;
-type ConfigKey = keyof Schema;
+type VisibleSchema = TypeOf<typeof VisibleGlobalConfigSchema>;
+type ConfigKey = keyof VisibleSchema;
+
+// Keys within the GlobalConfigSchema that the user has access to directly modify
+const configKeys = <ConfigKey[]> Object.keys(VisibleGlobalConfigSchema.props);
+
+/**
+ * Given a full config object, returns a copy that only contains the parts the user needs to see.
+ */
+const visibleSchema = (config: Schema): VisibleSchema => {
+	const result = {};
+	for (let key of configKeys) result[key] = config[key];
+	return result as VisibleSchema;
+};
 
 /**
  * Quick, dirty utility to convert 'camelCase' to 'non case'.
  */
 const unCamel = (input: string) => input.replace(/([A-Z])/g, ' $1').toLowerCase();
-
-/**
- * Allows the user to check their password against the given hash and keep retrying until they get it right.  Returns
- * the correct password once it has been found.  The function also caches a copy of the correct password in memory, so
- * that the user need not be asked for it multiple times per session.
- */
-const guessAndCheckPassword = (() => {
-	let passwordCache: string = null;
-
-	return async (passwordHash: string): Promise<string> => {
-		if (passwordCache !== null) return passwordCache;
-
-		passwordCache = await getPassword();
-		while (!await bcrypt.compare(passwordCache, passwordHash)) {
-			passwordCache = await getPassword('Incorrect password. Try again:');
-		}
-
-		return passwordCache;
-	};
-})();
 
 /**
  * Configuration manager for plopify with built-in password protection.
@@ -45,12 +38,35 @@ export default function (base: string) {
 	const file = path.resolve(base, 'plopify-config.json');
 
 	// Writes a fresh copy of the config data to a file.
-	const saveConfig = (data: Schema) => {
+	const saveConfig = async (data: Schema, password: string) => {
+		// Encrypt if necessary
+		if (password !== '') {
+			const cryptr = new Cryptr(password);
+			for (let key in data) {
+				data[key] = cryptr.encrypt(data[key]);
+			}
+			data.password = await bcrypt.hash(password, 10);
+		} else {
+			data.password = '';
+		}
+
 		fs.writeFileSync(file, JSON.stringify(GlobalConfigSchema.encode(data), null, 2));
 	};
 
 	// Quick helper for loading the config
-	const loadConfig = () => loader(GlobalConfigSchema).loadConfigFile(file);
+	const loadConfig = async (decrypt: boolean = true) => {
+		let config = loader(GlobalConfigSchema).loadConfigFile(file);
+		const hash = config.password;
+
+		if (decrypt && hash !== '') {
+			const cryptr = new Cryptr(await guessAndCheckPassword(hash));
+			for (let key of configKeys) {
+				config[key] = cryptr.decrypt(config[key]);
+			}
+		}
+
+		return config;
+	};
 
 	// Initializes global config file
 	const init = async () => {
@@ -70,32 +86,23 @@ export default function (base: string) {
 		if (usePassword) password = await collectPassword();
 
 		// Then build a list of prompts based on the schema
-		const prompts = Object.keys(GlobalConfigSchema.props).filter(key => key !== 'password').map(key => ({
+		const prompts = configKeys.map(key => ({
 			name: key,
 			message: 'Enter your ' + chalk.yellow(unCamel(key)) + ' (leave blank if you wish):'
 		}));
 
 		// Collect user answers
-		const answers: TypeOf<typeof GlobalConfigSchema> = await prompt(prompts);
-
-		// Encrypt if necessary
-		if (password !== '') {
-			const cryptr = new Cryptr(password);
-			for (let key in answers) {
-				answers[key] = cryptr.encrypt(answers[key]);
-			}
-			answers.password = await bcrypt.hash(password, 10);
-		} else {
-			answers.password = '';
-		}
+		// TODO: this is really what it should be
+		// const answers: VisibleSchema = await prompt(prompts);
+		const answers: Schema = await prompt(prompts);
 
 		// Save and give message
-		saveConfig(answers);
+		await saveConfig(answers, password);
 		console.log('Config initialized at ' + chalk.blue.underline(file));
 	};
 
-	// Another helper that loads AND decrypts the config
-	const loadAndDecrypt = async () => {
+	// Loads the config, prompting the user to create one if it doesn't exist
+	const ensureLoadConfig = async (decrypt: boolean = true) => {
 		if (!fs.existsSync(file)){
 			if (await confirm('No config file exists.  Would you like to create one?'))
 				await init();
@@ -106,17 +113,7 @@ export default function (base: string) {
 				);
 		}
 
-		let config = loadConfig();
-		const hash = config.password;
-
-		if (hash !== '') {
-			const cryptr = new Cryptr(await guessAndCheckPassword(hash));
-			for (let key in config) {
-				config[key] = cryptr.decrypt(config[key]);
-			}
-		}
-
-		return config;
+		return loadConfig(decrypt);
 	};
 
 	// Sets a specific key/value in the config
@@ -126,16 +123,15 @@ export default function (base: string) {
 		}
 
 		// Determine which key to set
-		const validKeys = Object.keys(GlobalConfigSchema.props).filter(prop => prop !== 'password');
 		if (!key) {
 			key = (await prompt([{
 				type: 'list',
 				name: 'key',
 				message: 'Which property do you want to set?',
-				choices: validKeys
+				choices: configKeys
 			}]) as any).key;
-		} else if (validKeys.indexOf(key) === -1) {
-			throw new Error('Invalid property: must be one of the following: ' + validKeys.join(','));
+		} else if (configKeys.indexOf(key) === -1) {
+			throw new Error('Invalid property: must be one of the following: ' + configKeys.join(','));
 		}
 
 		// Ask for a value if one was not provided
@@ -147,22 +143,17 @@ export default function (base: string) {
 		}
 
 		// Load and patch the config
-		let config = loadConfig();
-		if (config.password === '') {
-			config[key] = value;
-		} else {
-			const cryptr = new Cryptr(await guessAndCheckPassword(config.password));
-			config[key] = cryptr.encrypt(value);
-		}
+		let config = await loadConfig();
+		config[key] = value;
 
-		saveConfig(config);
+		await saveConfig(config, await guessAndCheckPassword(config.password));
 
 		console.log('Changes saved to', chalk.blue.underline(file));
 	};
 
 	// Reads the entire config file, or just one value if a key is passed
 	const read = async (key?: ConfigKey) => {
-		const data = await loadAndDecrypt();
+		const data = await ensureLoadConfig();
 		if (!key) {
 			return data;
 		} else {
@@ -180,12 +171,20 @@ export default function (base: string) {
 		}
 	};
 
+	// Ensures the specified keys have
+	// const ensure = async (keys: ConfigKey[]) => {
+	// 	const data = await loadAndDecrypt();
+	// 	const emptyKeys = [];
+	// 	for (let key in data) {
+	//
+	// 	}
+	// };
+
 	return {
 		read,
 		init,
 		async view(key?: ConfigKey) {
-			const config = await loadAndDecrypt();
-			delete config.password;
+			const config = visibleSchema(await ensureLoadConfig());
 
 			if (!key) {
 				console.log(JSON.stringify(config, null, 2));
