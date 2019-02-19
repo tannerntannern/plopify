@@ -103,9 +103,14 @@ export let EjectedRCSchema = t.type({
 	answers: t.record(t.string, t.string)
 });
 
-export let GlobalConfigSchema = t.type({
-	password: withDefault(t.string, ''),
+export let VisibleGlobalConfigSchema = t.type({
 	githubUsername: withDefault(t.string, ''),
 	githubPersonalAccessToken: withDefault(t.string, ''),
-	// TODO: add more tokens as support is added
 });
+
+export let InvisibleGlobalConfigSchema = t.type({
+	// TODO: this should really be called passwordHash to avoid confusion
+	password: withDefault(t.string, ''),
+});
+
+export let GlobalConfigSchema = t.intersection([VisibleGlobalConfigSchema, InvisibleGlobalConfigSchema]);
