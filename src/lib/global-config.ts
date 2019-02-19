@@ -118,6 +118,7 @@ export default function (base: string) {
 
 	// Sets a specific key/value in the config
 	const set = async (key?: ConfigKey, value?) => {
+		// TODO: probably should use ensureLoadConfig() instead
 		if (!fs.existsSync(file)){
 			throw new Error('No config file exists.  Run `' + chalk.yellow('plopify config init') + '` to generate one.');
 		}
