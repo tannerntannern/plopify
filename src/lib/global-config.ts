@@ -53,7 +53,7 @@ export default function (base: string) {
 		fs.writeFileSync(file, JSON.stringify(GlobalConfigSchema.encode(data), null, 2));
 	};
 
-	// Quick helper for loading the config
+	// Quick helper for loading the config, decrypting if necessary
 	const loadConfig = async (decrypt: boolean = true) => {
 		let config = loader(GlobalConfigSchema).loadConfigFile(file);
 		const hash = config.password;
@@ -118,10 +118,7 @@ export default function (base: string) {
 
 	// Sets a specific key/value in the config
 	const set = async (key?: ConfigKey, value?) => {
-		// TODO: probably should use ensureLoadConfig() instead
-		if (!fs.existsSync(file)){
-			throw new Error('No config file exists.  Run `' + chalk.yellow('plopify config init') + '` to generate one.');
-		}
+		let config = await ensureLoadConfig();
 
 		// Determine which key to set
 		if (!key) {
@@ -139,14 +136,13 @@ export default function (base: string) {
 		if (!value) {
 			value = (await prompt([{
 				name: 'value',
-				message: 'Enter a value for ' + chalk.yellow(unCamel(key)) + ':'
+				message: 'Enter a value for ' + chalk.yellow(unCamel(key)) + ':',
+				default: config[key]
 			}]) as any).value;
 		}
 
-		// Load and patch the config
-		let config = await loadConfig();
+		// Patch the config
 		config[key] = value;
-
 		await saveConfig(config, await guessAndCheckPassword(config.password));
 
 		console.log('Changes saved to', chalk.blue.underline(file));
