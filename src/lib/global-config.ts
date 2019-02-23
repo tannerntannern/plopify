@@ -61,7 +61,9 @@ export default function (base: string) {
 		if (decrypt && hash !== '') {
 			const cryptr = new Cryptr(await guessAndCheckPassword(hash));
 			for (let key of configKeys) {
-				config[key] = cryptr.decrypt(config[key]);
+				if (config[key] && config[key] !== '') {
+					config[key] = cryptr.decrypt(config[key]);
+				}
 			}
 		}
 
@@ -137,7 +139,7 @@ export default function (base: string) {
 			value = (await prompt([{
 				name: 'value',
 				message: 'Enter a value for ' + chalk.yellow(unCamel(key)) + ':',
-				default: config[key]
+				default: config[key] === '' ? undefined : config[key]	// we don't want the default value to show if it's ''
 			}]) as any).value;
 		}
 
