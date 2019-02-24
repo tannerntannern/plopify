@@ -8,7 +8,7 @@ import {prompt} from 'inquirer';
 import chalk from 'chalk';
 
 import {VisibleGlobalConfigSchema, GlobalConfigSchema} from '../schemas';
-import {confirm, guessAndCheckPassword, collectPassword} from './prompts';
+import {confirm, guessAndCheckPassword, collectPassword} from '../util/prompts';
 
 type Schema = TypeOf<typeof GlobalConfigSchema>;
 type VisibleSchema = TypeOf<typeof VisibleGlobalConfigSchema>;
@@ -169,15 +169,6 @@ export default function (base: string) {
 			}
 		}
 	};
-
-	// Ensures the specified keys have
-	// const ensure = async (keys: ConfigKey[]) => {
-	// 	const data = await loadAndDecrypt();
-	// 	const emptyKeys = [];
-	// 	for (let key in data) {
-	//
-	// 	}
-	// };
 
 	return {
 		read,

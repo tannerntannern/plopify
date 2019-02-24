@@ -6,8 +6,8 @@ import {Command} from 'commander';
 import {spawn} from 'child_process';
 import globalConfig from './global-config';
 
-import {confirm} from './prompts';
-import {renderString} from './templates';
+import {confirm} from '../util/prompts';
+import {renderString} from '../util/templates';
 
 // Commander.js doesn't appear to respect async functions, so we have to use these external resolve/reject references to
 // make it work

@@ -15,9 +15,9 @@ import loader from 'rc.ts';
 
 const packageJson = require('../package.json');
 import {RCSchema, EjectedRCSchema, GlobalConfigSchema} from './schemas';
-import {intersection, union, difference, arrayify} from './lib/arrays';
-import {readFile, readFileLines, getFileList} from './lib/files';
-import {renderString} from './lib/templates';
+import {intersection, union, difference, arrayify} from './util/arrays';
+import {readFile, readFileLines, getFileList} from './util/files';
+import {renderString} from './util/templates';
 import {runHooks} from './lib/hooks';
 import globalConfig from './lib/global-config';
 
