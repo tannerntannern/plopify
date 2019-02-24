@@ -2,9 +2,9 @@ import * as fs from 'fs';
 import * as fse from 'fs-extra';
 import * as path from 'path';
 import * as inquirer from 'inquirer';
+import * as program from 'commander';
 import chalk from 'chalk';
 import loader from 'rc.ts';
-import {Command} from 'commander';
 
 import {header, logStatus} from '../util/misc';
 import {arrayify} from '../util/arrays';
@@ -48,34 +48,33 @@ export const generateTemplate = (templateLocation: string, templateDir: string, 
 	return templateFiles.length + 1;
 };
 
-export default function(program: Command) {
-	// TODO: use auto-complete inquirer prompt with the github api to interactively search for existing templates
-	//  (https://github.com/mokkabonna/inquirer-autocomplete-prompt)
-	program
-		.command('gen <template> <outdir>')
-		.description('Generates a new project based on the given template')
-		.action(async (template: string, outdir: string, options) => {
-			console.log(header);
+// TODO: use auto-complete inquirer prompt with the github api to interactively search for existing templates
+//  (https://github.com/mokkabonna/inquirer-autocomplete-prompt)
+program
+	.usage('<template> <outdir>')
+	.description('Testing testing')
+	.action(async (template: string, outdir: string, options) => {
+		console.log(header);
 
-			const {templateDir} = prepareForStaging(template);
+		const {templateDir} = prepareForStaging(template);
 
-			const config = loader(RCSchema).loadConfigFile(path.resolve(templateDir, '.plopifyrc.js'));
-			const answers: {[key: string]: any} = await inquirer.prompt(config.prompts);
+		const config = loader(RCSchema).loadConfigFile(path.resolve(templateDir, '.plopifyrc.js'));
+		const answers: {[key: string]: any} = await inquirer.prompt(config.prompts);
 
-			const fullOutDir = path.resolve(outdir);
-			fse.mkdirpSync(fullOutDir);
+		const fullOutDir = path.resolve(outdir);
+		fse.mkdirpSync(fullOutDir);
 
-			await runHooks(arrayify(config.hooks.preGenerate), answers, fullOutDir);
+		await runHooks(arrayify(config.hooks.preGenerate), answers, fullOutDir);
 
-			const totalFiles = await generateTemplate(template, templateDir, answers, fullOutDir);
-			cleanUpStaging();
+		const totalFiles = await generateTemplate(template, templateDir, answers, fullOutDir);
+		cleanUpStaging();
 
-			await runHooks(arrayify(config.hooks.postGenerate), answers, fullOutDir);
+		await runHooks(arrayify(config.hooks.postGenerate), answers, fullOutDir);
 
-			console.log();
-			console.log(
-				chalk.bold.bgGreen(' SUCCESS '),
-				chalk.yellow('+' + totalFiles), 'files added at', chalk.underline.blue(fullOutDir)
-			);
-		});
-}
+		console.log();
+		console.log(
+			chalk.bold.bgGreen(' SUCCESS '),
+			chalk.yellow('+' + totalFiles), 'files added at', chalk.underline.blue(fullOutDir)
+		);
+	})
+	.parse(process.argv);

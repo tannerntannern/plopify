@@ -12,7 +12,7 @@ import {prepareForStaging, cleanUpStaging} from '../lib/staging-env';
 import {header, logStatus} from '../util/misc';
 import {getFileList, readFileLines} from '../util/files';
 import {arrayify, difference, intersection, union} from '../util/arrays';
-import {generateTemplate} from './gen';
+import {generateTemplate} from './plopify-gen';
 
 /**
  * Given an UpdatePolicy, returns an array of all the files matched by pattern and patternFromFile.
@@ -78,6 +78,7 @@ const updateProject = async (newDir: string, oldDir: string, updatePolicies: Typ
 export default function(program: Command) {
 	program
 		.command('update [project]')
+		.alias('up')
 		.description('Updates an existing project based on changes from the template')
 		.option('-p --prompts', 'prompt the user for input again instead of using the saved answers')
 		.action(async (project, options) => {

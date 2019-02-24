@@ -7,6 +7,7 @@ import globalConfig from '../lib/global-config';
 export default function(program: Command) {
 	program
 		.command('config <action> [key] [value]')
+		.alias('conf')
 		.description('Displays or modifies the content of plopify\'s global config data')
 		.action(async (action, key, value) => {
 			if (action !== 'where') console.log(header);

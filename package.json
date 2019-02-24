@@ -7,7 +7,7 @@
     "templates"
   ],
   "bin": {
-    "plopify": "dist/bin.js"
+    "plopify": "dist/cli/plopify.js"
   },
   "scripts": {
     "build": "tsc",
