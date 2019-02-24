@@ -106,6 +106,7 @@ export let EjectedRCSchema = t.type({
 export let VisibleGlobalConfigSchema = t.type({
 	githubUsername: withDefault(t.string, ''),
 	githubPersonalAccessToken: withDefault(t.string, ''),
+	travisCiApiToken: withDefault(t.string, ''),
 });
 
 export let InvisibleGlobalConfigSchema = t.type({
