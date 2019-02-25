@@ -20,11 +20,13 @@ This actually makes the two tools quite complementary because their use-cases do
 
 ## Getting Started
 ### Installation
-`plopify` is available on npm.  It should be installed globally, but it can be installed as a dev dependency if you really want.
-
+`plopify` is a CLI application that should be installed globally:
 ```
-npm i -g plopify              # with npm
-yarn global add plopify       # with yarn
+$ npm i -g plopify
+```
+or
+```
+$ yarn global add plopify
 ```
 
 (more coming soon)
