@@ -34,7 +34,7 @@ $ yarn global add plopify
 ## 📑 CLI Reference
 All commands begin with `plopify`.  To display help for any command, simply add `--help`; e.g., `plopify gen --help`
 
-### `plopify init`
+### `plopify init <dir>`
 ...
 
 ### `plopify gen <template> <outdir>`
