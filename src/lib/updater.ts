@@ -64,6 +64,7 @@ const updateProject = async (newDir: string, oldDir: string, updatePolicies: Typ
 		});
 
 		// TODO: ...
+		console.log(chalk.bgRed.bold(' WARNING '), 'This command is not yet fully implemented.  No actions will be taken.');
 
 		console.log('added:', addedFiles);
 		console.log('removed:', removedFiles);
