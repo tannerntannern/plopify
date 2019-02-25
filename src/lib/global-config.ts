@@ -74,8 +74,8 @@ export default function (base: string) {
 	const init = async () => {
 		if (fs.existsSync(file)) {
 			throw new Error(
-				chalk.yellow('Warning: ') + 'Config file already exists.  If you want to modify it, run `' +
-				chalk.yellow('plopify config set <key> <value>') + '`.  To blow it up and start over, first run `' +
+				'Config file already exists.  If you want to modify it, run `' +
+				chalk.yellow('plopify config set [key] [value]') + '`.  To blow it up and start over, first run `' +
 				chalk.yellow('plopify config flush') + '`'
 			);
 		}
@@ -176,10 +176,10 @@ export default function (base: string) {
 		async view(key?: ConfigKey) {
 			const config = visibleSchema(await ensureLoadConfig());
 
-			if (!key) {
+			if (typeof key !== 'string') {
 				console.log(JSON.stringify(config, null, 2));
 			} else {
-				console.log(config[key]);
+				console.log(key);
 			}
 		},
 		where() {

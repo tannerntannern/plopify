@@ -5,14 +5,13 @@ import * as md5 from 'md5-file';
 import chalk from 'chalk';
 import loader from 'rc.ts';
 import {TypeOf} from 'io-ts';
-import {Command} from 'commander';
 
 import {EjectedRCSchema, RCSchema} from '../schemas';
-import {prepareForStaging, cleanUpStaging} from '../lib/staging-env';
+import {prepareForStaging, cleanUpStaging} from './staging-env';
 import {header, logStatus} from '../util/misc';
 import {getFileList, readFileLines} from '../util/files';
 import {arrayify, difference, intersection, union} from '../util/arrays';
-import {generateTemplate} from './plopify-gen';
+import {generateTemplate} from './generator';
 
 /**
  * Given an UpdatePolicy, returns an array of all the files matched by pattern and patternFromFile.
@@ -74,63 +73,58 @@ const updateProject = async (newDir: string, oldDir: string, updatePolicies: Typ
 	});
 };
 
+/**
+ * Walks the user through updating their project.
+ */
+export const updateCmd = async (project: string, options) => {
+	console.log(header);
 
-export default function(program: Command) {
-	program
-		.command('update [project]')
-		.alias('up')
-		.description('Updates an existing project based on changes from the template')
-		.option('-p --prompts', 'prompt the user for input again instead of using the saved answers')
-		.action(async (project, options) => {
-			console.log(header);
+	// Make sure project exists
+	if (!project) project = '.';
+	const projectDir = path.resolve(project);
+	if (!fs.existsSync(projectDir)) {
+		console.log(chalk.red('Error: Cannot find'), chalk.blue.underline(projectDir));
+		process.exit(1);
+	}
 
-			// Make sure project exists
-			if (!project) project = '.';
-			const projectDir = path.resolve(project);
-			if (!fs.existsSync(projectDir)) {
-				console.log(chalk.red('Error: Cannot find'), chalk.blue.underline(projectDir));
-				process.exit(1);
-			}
+	// Make sure the project has a .plopifyrc.json
+	process.stdout.write('Locating saved data... ');
+	const plopifyJson = path.resolve(projectDir, '.plopifyrc.json');
+	const plopifyJsonExists = fs.existsSync(plopifyJson);
+	logStatus(plopifyJsonExists);
+	if (!plopifyJsonExists) {
+		console.log(chalk.red('Error: Cannot find a .plopifyrc.json in'), chalk.blue.underline(projectDir));
+		process.exit(1);
+	}
 
-			// Make sure the project has a .plopifyrc.json
-			process.stdout.write('Locating saved data... ');
-			const plopifyJson = path.resolve(projectDir, '.plopifyrc.json');
-			const plopifyJsonExists = fs.existsSync(plopifyJson);
-			logStatus(plopifyJsonExists);
-			if (!plopifyJsonExists) {
-				console.log(chalk.red('Error: Cannot find a .plopifyrc.json in'), chalk.blue.underline(projectDir));
-				process.exit(1);
-			}
+	// TODO: Make sure the current plopify version is compatible
+	const ejectedConfig = loader(EjectedRCSchema).loadConfigFile(plopifyJson);
 
-			// TODO: Make sure the current plopify version is compatible
-			const ejectedConfig = loader(EjectedRCSchema).loadConfigFile(plopifyJson);
+	// Prepare for staging
+	const {templateDir, stagingDir} = prepareForStaging(ejectedConfig.templateLocation);
+	const templateConfig = loader(RCSchema).loadConfigFile(path.resolve(templateDir, '.plopifyrc.js'));
 
-			// Prepare for staging
-			const {templateDir, stagingDir} = prepareForStaging(ejectedConfig.templateLocation);
-			const templateConfig = loader(RCSchema).loadConfigFile(path.resolve(templateDir, '.plopifyrc.js'));
+	// TODO: detect added or removed questions
+	const answers: {[key: string]: any} = options.prompts ? await inquirer.prompt(templateConfig.prompts) : ejectedConfig.answers;
+	const stagingCopyDir = path.resolve(stagingDir, 'project');
 
-			// TODO: detect added or removed questions
-			const answers: {[key: string]: any} = options.prompts ? await inquirer.prompt(templateConfig.prompts) : ejectedConfig.answers;
-			const stagingCopyDir = path.resolve(stagingDir, 'project');
+	// await runHooks(arrayify(templateConfig.hooks.preUpdate), answers, projectDir);
 
-			// await runHooks(arrayify(templateConfig.hooks.preUpdate), answers, projectDir);
+	// Re-generate temporary copy for comparison, then compare with live project and merge
+	await generateTemplate(ejectedConfig.templateLocation, templateDir, answers, stagingCopyDir);
+	const stats = await updateProject(stagingCopyDir, projectDir, templateConfig.updatePolicies);
+	cleanUpStaging();
 
-			// Re-generate temporary copy for comparison, then compare with live project and merge
-			await generateTemplate(ejectedConfig.templateLocation, templateDir, answers, stagingCopyDir);
-			const stats = await updateProject(stagingCopyDir, projectDir, templateConfig.updatePolicies);
-			cleanUpStaging();
+	// await runHooks(arrayify(templateConfig.hooks.postUpdate), answers, projectDir);
 
-			// await runHooks(arrayify(templateConfig.hooks.postUpdate), answers, projectDir);
-
-			console.log();
-			console.log(
-				(stats.added + stats.removed + stats.modified + stats.manualMerge) ?
-					chalk.bold.bgGreen(' SUCCESS ') :
-					(chalk.bold.bgYellow(' SUCCESS ') + ' (no changes)')
-			);
-			if (stats.added) console.log(chalk.yellow('+ ' + stats.added), 'files added');
-			if (stats.removed) console.log(chalk.yellow('- ' + stats.removed), 'files removed');
-			if (stats.modified) console.log(chalk.yellow('± ' + stats.modified), 'files modified');
-			if (stats.manualMerge) console.log(chalk.yellowBright('? ' + stats.manualMerge), 'files need manual merging');
-		});
-}
+	console.log();
+	console.log(
+		(stats.added + stats.removed + stats.modified + stats.manualMerge) ?
+			chalk.bold.bgGreen(' SUCCESS ') :
+			(chalk.bold.bgYellow(' SUCCESS ') + ' (no changes)')
+	);
+	if (stats.added) console.log(chalk.yellow('+ ' + stats.added), 'files added');
+	if (stats.removed) console.log(chalk.yellow('- ' + stats.removed), 'files removed');
+	if (stats.modified) console.log(chalk.yellow('± ' + stats.modified), 'files modified');
+	if (stats.manualMerge) console.log(chalk.yellowBright('? ' + stats.manualMerge), 'files need manual merging');
+};

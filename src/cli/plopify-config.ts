@@ -1,28 +1,56 @@
+#!/usr/bin/env node
+import * as path from 'path';
+import * as program from 'commander';
 import chalk from 'chalk';
-import {Command} from 'commander';
 
 import {header} from '../util/misc';
 import globalConfig from '../lib/global-config';
 
-export default function(program: Command) {
-	program
-		.command('config <action> [key] [value]')
-		.alias('conf')
-		.description('Displays or modifies the content of plopify\'s global config data')
-		.action(async (action, key, value) => {
-			if (action !== 'where') console.log(header);
+const conf = globalConfig(path.resolve(__dirname, '..'));
 
-			const actions = ['init', 'view', 'where', 'flush', 'set'];
-			if (actions.indexOf(action) === -1) {
-				console.log(chalk.red('Invalid Operation: the action argument must be one of the following: ' + actions.join(', ')));
-				process.exit(1);
-			}
+// Turns a plain async function into formatted command
+const commandify = (func: (...args) => any, noHeader: boolean = false) => {
+	return async (...args) => {
+		try {
+			if (!noHeader) console.log(header);
+			await func.apply(null, args);
+		} catch (e) {
+			console.log(chalk.red('Error:'), e.message);
+			process.exit(1);
+		}
+	};
+};
 
-			try {
-				await globalConfig(__dirname)[action](key, value);
-			} catch (e) {
-				console.log(chalk.red('Error:'), e.message);
-				process.exit(1);
-			}
-		});
+program
+	.command('init')
+	.description('Initializes a global config file if it doesn\'t exist')
+	.action(commandify(conf.init));
+
+program
+	.command('view')
+	.description('Displays the content of the global config data')
+	.action(commandify(conf.view));
+
+program
+	.command('where')
+	.description('Prints out the location of the global config file')
+	.action(commandify(conf.where, true));
+
+program
+	.command('flush')
+	.alias('delete')
+	.description('Deletes all of the global config data')
+	.action(commandify(conf.flush));
+
+program
+	.command('set [key] [value]')
+	.description('Sets a value in the global config file')
+	.action(commandify(conf.set));
+
+program
+	.parse(process.argv);
+
+// Simply output help if no subcommand is specified
+if (program.args.length === 0) {
+	program.outputHelp();
 }
