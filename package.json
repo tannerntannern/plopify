@@ -60,6 +60,9 @@
     "typescript": "^3.2.2",
     "typescript-eslint-parser": "^21.0.2"
   },
+  "engines": {
+    "node": ">=8"
+  },
   "keywords": [
     "template",
     "templating",
@@ -70,6 +73,7 @@
     "project scaffolding",
     "project templating"
   ],
+  "homepage": "https://tannerntannern.github.io/plopify",
   "repository": {
     "type": "git",
     "url": "https://github.com/tannerntannern/plopify.git"
