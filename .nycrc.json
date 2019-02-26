@@ -5,6 +5,10 @@
   "include": [
 	"./src/**/*.ts"
   ],
+  "exclude": [
+	"./src/schemas.ts",
+	"./src/util/misc.ts"
+  ],
   "reporter": [
 	"html",
 	"lcov"
