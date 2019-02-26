@@ -8,9 +8,9 @@ before_script:
 script:
   - yarn lint
   - yarn test
-#after_success:
-#  - yarn coverage
-#  - yarn coveralls
+after_success:
+  - yarn coverage
+  - yarn coveralls
 
 cache:
   directories:
