@@ -10,6 +10,7 @@ const conf = globalConfig(path.resolve(__dirname, '..'));
 
 program
 	.command('github-create <name>')
+	.description('Creates a remote repository on GitHub with the given name')
 	.option('-p --private', 'Whether to make the new repo private')
 	.action(async (name, options) => {
 		const token = await conf.read('githubPersonalAccessToken');
@@ -38,6 +39,8 @@ program
 					console.log('This likely means your GitHub personal access token is invalid.');
 					break;
 				}
+
+				console.log(chalk.yellow('Additional info:'), e.response.data);
 			}
 
 			process.exit(1);
@@ -46,9 +49,9 @@ program
 
 program
 	.command('travis-enable <slug>')
+	.description('Enables Travis CI for the given repository (equivalent to flicking the switch on the Travis CI dashboard)')
 	.action(async (slug, options) => {
 		const config = await conf.read();
-		const user = config.githubUsername;
 		const token = config.travisCiApiToken;
 
 		const base = 'https://api.travis-ci.org';
@@ -76,6 +79,51 @@ program
 			if (e.response) {
 				// TODO: research the response codes to deliver more meaningful error messages
 				console.log(e.response.data);
+			}
+
+			process.exit(1);
+		}
+	});
+
+program
+	.command('coveralls-enable <slug> [gitprovider]')
+	.description('Enables Coveralls for the given repository (equivalent to flicking the switch on the Coveralls dashboard)')
+	.action(async (slug, gitprovider = 'github', options) => {
+		const config = await conf.read();
+		const token = config.coverallsPersonalApiToken;
+
+		const base = 'https://coveralls.io/api';
+		const headers = {
+			'Accept': 'application/json',
+			'Content-Type': 'application/json',
+			'Authorization': 'token ' + token
+		};
+		const data = {
+			'repo': {
+				'service': gitprovider,
+				'name': slug
+			}
+		};
+
+		try {
+			process.stdout.write(`Enabling Coveralls for ${slug}... `);
+			await axios.post(`${base}/repos`, data, {headers});
+			logStatus(true);
+		} catch (e) {
+			logStatus(false);
+
+			if (e.response) {
+				process.stdout.write(chalk.bgRed.bold(' ' + e.response.status + ' ') + ' ');
+				switch(e.response.status) {
+				case 403:
+					console.log('This likely means your Coveralls Personal API Token is invalid');
+					break;
+				default:
+					console.log('We\'re not entirely sure why this error occurred');
+					break;
+				}
+
+				console.log(chalk.yellow('Additional info:'), e.response.data);
 			}
 
 			process.exit(1);
