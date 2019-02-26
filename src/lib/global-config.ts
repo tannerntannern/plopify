@@ -151,7 +151,9 @@ export default function (base: string) {
 	};
 
 	// Reads the entire config file, or just one value if a key is passed
-	const read = async (key?: ConfigKey) => {
+	async function read(): Promise<Schema>;
+	async function read<T extends ConfigKey>(key: T): Promise<Schema[T]>;
+	async function read(key?: ConfigKey) {
 		const data = await ensureLoadConfig();
 		if (!key) {
 			return data;
@@ -168,7 +170,7 @@ export default function (base: string) {
 				return value;
 			}
 		}
-	};
+	}
 
 	return {
 		read,
