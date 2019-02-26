@@ -2,6 +2,7 @@
 [![npm version](https://badgen.net/npm/v/plopify)](https://npmjs.com/package/plopify)
 [![node version](https://badgen.net/npm/node/plopify)](https://nodejs.org)
 [![Build Status](https://travis-ci.org/tannerntannern/plopify.svg?branch=master)](https://travis-ci.org/tannerntannern/plopify)
+[![Coverage Status](https://coveralls.io/repos/github/tannerntannern/plopify/badge.svg?branch=master)](https://coveralls.io/github/tannerntannern/plopify?branch=master)
 [![Conventional Commits](https://badgen.net/badge/Conventional%20Commits/1.0.0/yellow)](https://conventionalcommits.org)
 
 A Plop-inspired tool that takes project templating to the next level.
