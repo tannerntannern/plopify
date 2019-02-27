@@ -8,6 +8,8 @@ import globalConfig from '../lib/global-config';
 import {logStatus} from '../util/misc';
 const conf = globalConfig(path.resolve(__dirname, '..'));
 
+const sleep = (time: number) => new Promise(resolve => setTimeout(resolve, time));
+
 program
 	.command('github-create <name>')
 	.description('Creates a remote repository on GitHub with the given name')
@@ -16,7 +18,7 @@ program
 		const token = await conf.read('githubPersonalAccessToken');
 
 		try {
-			console.log('Attempting to create repository:', name);
+			process.stdout.write(`Attempting to create repository: ${name}... `);
 
 			let res = await (axios.request({
 				method: 'POST',
@@ -30,6 +32,7 @@ program
 				}
 			}));
 
+			logStatus(true);
 			console.log('Successfully created', chalk.blue.underline(res.data.clone_url));
 		} catch (e) {
 			if (e.response) {
@@ -50,35 +53,72 @@ program
 program
 	.command('travis-enable <slug>')
 	.description('Enables Travis CI for the given repository (equivalent to flicking the switch on the Travis CI dashboard)')
+	.option('-r --retries <n>', 'how many times we should ask Travis if it found our new repo before we give up (syncing from GitHub can take time)', parseInt)
+	.option('-d --delay <n>', 'how many milliseconds to wait between each retry', parseInt)
 	.action(async (slug, options) => {
 		const config = await conf.read();
 		const token = config.travisCiApiToken;
 
+		const delay: number = options.delay || 1500;
+		const retries: number = options.retries || 5;
+		let retriesLeft = retries;
+
 		const base = 'https://api.travis-ci.org';
-		const headers = {
-			'Travis-API-Version': 3,
-			'User-Agent': 'Plopify',
-			'Authorization': 'token ' + token
+		const reqConfig = {
+			// For these requests, we want 404 to be a valid response
+			validateStatus: (status) => (status >= 200 && status < 300) || status === 404,
+			headers: {
+				'Travis-API-Version': 3,
+				'User-Agent': 'Plopify',
+				'Authorization': 'token ' + token
+			}
 		};
 
 		try {
 			process.stdout.write('Authorizing... ');
-			let userInfo = (await axios.get(`${base}/user`, {headers})).data;
+			let userInfo = (await axios.get(`${base}/user`, reqConfig)).data;
 			logStatus(true);
 
 			process.stdout.write('Syncing Travis CI to GitHub... ');
-			await axios.post(`${base}/user/${userInfo.id}/sync`, {}, {headers});
+			await axios.post(`${base}/user/${userInfo.id}/sync`, {}, reqConfig);
 			logStatus(true);
 
+			let found: boolean = false;
+			while(retriesLeft > 0 && !found) {
+				process.stdout.write(`Checking for new repo: ${slug}... `);
+				found = (await axios.get(`${base}/repo/${encodeURIComponent(slug)}`, reqConfig)).status !== 404;
+				logStatus(found);
+
+				if (!found) {
+					retriesLeft --;
+					console.log(`Unable to find ${slug}.  Perhaps Travis is not finished syncing.  Retrying... (${retries - retriesLeft}/${retries})`);
+					await sleep(delay);
+				}
+			}
+
+			// If we have exited the while loop and Travis still can't find the repo, something is probably wrong
+			if (!found) {
+				throw {response: {
+					status: 404,
+					data: 'Travis CI was unable to to locate ' + slug
+				}};
+			}
+
 			process.stdout.write(`Enabling Travis CI builds for ${slug}... `);
-			await axios.post(`${base}/repo/${encodeURIComponent(slug)}/activate`, {}, {headers});
+			await axios.post(`${base}/repo/${encodeURIComponent(slug)}/activate`, {}, reqConfig);
 			logStatus(true);
 		} catch (e) {
 			logStatus(false);
 
 			if (e.response) {
-				// TODO: research the response codes to deliver more meaningful error messages
-				console.log(e.response.data);
+				process.stdout.write(chalk.bgRed.bold(' ' + e.response.status + ' ') + ' ');
+				switch(e.response.status) {
+				default:
+					console.log('We\'re not entirely sure why this error occurred');
+					break;
+				}
+
+				console.log(chalk.yellow('Additional info:'), e.response.data);
 			}
 
 			process.exit(1);
