@@ -1,7 +1,9 @@
-os:
-  - windows
-  - linux
-  - osx
+# Enable this when Windows and OSX are more stable.  They take way too long and don't seem to terminate properly currently
+#os:
+#  - windows
+#  - linux
+#  - osx
+
 language: node_js
 node_js:
   - '8'
