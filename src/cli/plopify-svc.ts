@@ -5,10 +5,8 @@ import axios from 'axios';
 import chalk from 'chalk';
 
 import globalConfig from '../lib/global-config';
-import {logStatus} from '../util/misc';
+import {logStatus, sleep} from '../util/misc';
 const conf = globalConfig(path.resolve(__dirname, '..'));
-
-const sleep = (time: number) => new Promise(resolve => setTimeout(resolve, time));
 
 program
 	.command('github-create <name>')

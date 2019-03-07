@@ -13,3 +13,8 @@ export const header = chalk.bold.bgBlue(` ${packageJson.name} `) + chalk.bold.bg
 export function logStatus(success: boolean) {
 	console.log(success ? chalk.greenBright('✔ ') : chalk.red('✘ '));
 }
+
+/**
+ * Utility sleep function.  Usage: `await sleep(100);`
+ */
+export const sleep = (time: number) => new Promise(resolve => setTimeout(resolve, time));
