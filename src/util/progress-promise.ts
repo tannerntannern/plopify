@@ -1,5 +1,6 @@
-type Resolve<T> = (value?: T | PromiseLike<T>) => void;
+type Resolve<R> = (value?: R | PromiseLike<R>) => void;
 type Reject = (reason?: any) => void;
+type Status<S> = (data: S) => void;
 
 /**
  * The type of the "executor" argument passed to PromiseConstructor.
@@ -9,13 +10,13 @@ type PromiseExecutor<T> = (resolve: Resolve<T>, reject?: Reject) => void;
 /**
  * Identical to the executor that's passed to PromiseConstructor, with the addition of a status function
  */
-type ProgressPromiseExecutor<T> = (resolve: Resolve<T>, reject?: Reject, status?: (data) => void) => void;
+type ProgressPromiseExecutor<R, S> = (resolve: Resolve<R>, reject?: Reject, status?: Status<S>) => void;
 
 /**
  * Functionally similar to Promise<T>, but with the mandatory addition of `.status(...)` before `.then(...)`
  * @see progressPromise
  */
-export type ProgressPromise<T> = {status: (onStatus: (data) => void) => Promise<T>};
+export type ProgressPromise<R, S> = {status: (onStatus?: Status<S>) => Promise<R>};
 
 /**
  * Accepts a ProgressPromiseExecutor and returns a Promise-like object that exposes a `status` function, similar to
@@ -35,15 +36,13 @@ export type ProgressPromise<T> = {status: (onStatus: (data) => void) => Promise<
  *		console.error('ERROR:', error);
  * 	}));
  */
-export const progressPromise = <T = any>(executor: ProgressPromiseExecutor<T>): ProgressPromise<T> => ({
-	status: (onStatus: (data) => void) => {
-		// Converts our ProgressPromiseExecutor into a regular PromiseExecutor that can be fed to a Promise.  This is done
-		// by fixing the `status` argument to a function that simply executes `onStatus` above.  By default, `onStatus` does
-		// nothing, but it can be overridden with the `.status(...)` function.
-		const regularPromiseExecutor: PromiseExecutor<T> =
-			(resolve: Resolve<T>, reject: Reject) => executor(resolve, reject, (data) => onStatus(data));
+export const progressPromise = <R = any, S = any>(executor: ProgressPromiseExecutor<R, S>): ProgressPromise<R, S> => ({
+	status: (onStatus: Status<S>) => {
+		if (!onStatus) onStatus = () => {};
 
-		// Constructs a Promise with the modified executor and attaches the described `.status(...)` functionality
-		return new Promise<T>(regularPromiseExecutor);
+		const regularPromiseExecutor: PromiseExecutor<R> =
+			(resolve: Resolve<R>, reject: Reject) => executor(resolve, reject, onStatus);
+
+		return new Promise<R>(regularPromiseExecutor);
 	}
 });
