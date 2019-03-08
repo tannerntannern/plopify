@@ -2,54 +2,34 @@ import 'mocha';
 import {expect} from 'chai';
 import * as sinon from 'sinon';
 
-import {sleep} from '../../../src/util/misc';
 import {progressPromise} from '../../../src/util/progress-promise';
 
 describe('progressPromise(...)', () => {
-	describe('using it as a regular Promise', () => {
-		const asyncTask = (success: boolean) => progressPromise<string>((resolve, reject) => {
-			if (success) resolve('value'); else reject();
-		});
-
-		it('should resolve properly', async () => {
-			let resolver = sinon.fake();
-
-			await asyncTask(true).then(resolver);
-
-			expect(resolver.calledOnceWith('value')).to.be.true;
-		});
-
-		it('should reject properly', async () => {
-			let rejector = sinon.fake();
-
-			await asyncTask(false).catch(rejector);
-
-			expect(rejector.calledOnce).to.be.true;
-		});
+	const buildArray = () => progressPromise<number[]>(async (resolve, reject, status) => {
+		let array = [];
+		for (let i = 0; i < 3; i ++) {
+			status({msg: 'Pushing data', value: i});
+			array.push(i);
+		}
+		resolve(array);
 	});
 
-	describe('using it with `.status(...)`', () => {
-		const buildArray = () => progressPromise<number[]>(async (resolve, reject, status) => {
-			// Simulate computational delay so the `.status(...)` call has enough time to actually override the default
-			await sleep(10);
+	it('should resolve properly', async () => {
+		const then = sinon.fake();
 
-			let array = [];
-			for (let i = 0; i < 3; i ++) {
-				status({msg: 'Pushing data', value: i});
-				array.push(i);
-			}
-			resolve(array);
-		});
+		await (buildArray().status(() => {}).then(then));
 
-		it('should properly report status', async () => {
-			const onStatus = sinon.fake();
+		expect(then.calledOnceWithExactly([0, 1, 2])).to.be.true;
+	});
 
-			await (buildArray().status(onStatus));
+	it('should properly report status', async () => {
+		const onStatus = sinon.fake();
 
-			expect(onStatus.callCount).to.equal(3);
-			expect(onStatus.calledWith({msg: 'Pushing data', value: 0})).to.be.true;
-			expect(onStatus.calledWith({msg: 'Pushing data', value: 1})).to.be.true;
-			expect(onStatus.calledWith({msg: 'Pushing data', value: 2})).to.be.true;
-		});
+		await (buildArray().status(onStatus));
+
+		expect(onStatus.callCount).to.equal(3);
+		expect(onStatus.calledWith({msg: 'Pushing data', value: 0})).to.be.true;
+		expect(onStatus.calledWith({msg: 'Pushing data', value: 1})).to.be.true;
+		expect(onStatus.calledWith({msg: 'Pushing data', value: 2})).to.be.true;
 	});
 });
