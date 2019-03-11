@@ -37,7 +37,7 @@ export type ProgressPromise<R, S> = {status: (onStatus?: Status<S>) => Promise<R
  * 	}));
  */
 export const progressPromise = <R = any, S = any>(executor: ProgressPromiseExecutor<R, S>): ProgressPromise<R, S> => ({
-	status: (onStatus: Status<S>) => {
+	status: (onStatus) => {
 		if (!onStatus) onStatus = () => {};
 
 		const regularPromiseExecutor: PromiseExecutor<R> =
