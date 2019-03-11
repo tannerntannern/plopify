@@ -20,6 +20,9 @@ More info available in the [Plopify documentation](https://tannerntannern.github
 ## Getting Started
 Plopify can be installed from [npm](https://npmjs.com/package/plopify).  You can get up and running with the [quick start guide](https://tannerntannern.github.io/plopify/#/quick-start) available in the docs.
 
+## Contributing
+Contributions are always welcome!  Please read the [contribution guidelines](CONTRIBUTING.md) to get started.
+
 ## Author
 Tanner Nielsen <tannerntannern@gmail.com>
 
