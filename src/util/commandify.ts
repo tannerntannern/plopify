@@ -25,7 +25,7 @@ export const commandify = <A extends Array<any>>(apiFunction: APIFunction<A>, no
 			const result = await (apiFunction(...args).status(data => {
 				switch (data.status) {
 				case 'running':
-					process.stdout.write(`${data.task}...`);
+					process.stdout.write(`${data.task}... `);
 					break;
 				case 'failure':
 					logStatus(false);
