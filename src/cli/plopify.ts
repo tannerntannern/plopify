@@ -3,7 +3,8 @@ import * as inquirer from 'inquirer';
 import * as inquirerEmoji from 'inquirer-emoji';
 import * as program from 'commander';
 
-import {initCmd, genCmd} from '../lib/generator';
+import * as api from '../api';
+import {commandify} from '../util/commandify';
 import {updateCmd} from '../lib/updater';
 
 const packageJson = require('../../package.json');
@@ -17,12 +18,12 @@ program
 program
 	.command('init <dir>')
 	.description('Generates some starter code to kickstart your template (a "template for your template," if you will)')
-	.action(initCmd);
+	.action(commandify(api.init));
 
 program
 	.command('gen <template> <outdir>')
 	.description('Generates a new project based on the given template')
-	.action(genCmd);
+	.action(commandify(api.gen));
 
 program
 	.command('update [project]')

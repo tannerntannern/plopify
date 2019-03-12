@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import * as fg from 'fast-glob';
 import * as fse from 'fs-extra';
 import * as path from 'path';
 import chalk from 'chalk';
@@ -15,28 +14,6 @@ import {runHooks} from './hooks';
 import {arrayify} from '../util/arrays';
 
 const packageJson = require('../../package.json');
-
-/**
- * Copies the "template template" into the given directory.
- */
-export const initCmd = (dir: string) => {
-	console.log(header);
-	process.stdout.write('Copying files... ');
-
-	const outDir = path.resolve(dir);
-	const templateDir = path.resolve(__dirname, '../../templates/project-template/');
-	const totalFiles = fg.sync(path.resolve(templateDir, '**/*'), {dot: true}).length;
-
-	fse.mkdirpSync(outDir);
-	fse.copySync(templateDir, outDir);
-
-	logStatus(true);
-	console.log();
-	console.log(
-		chalk.bold.bgGreen(' SUCCESS '),
-		chalk.yellow('+' + totalFiles), 'files added at', chalk.underline.blue(outDir)
-	);
-};
 
 /**
  * Takes a templateDir and generates a new instance to outDir using the given data.
