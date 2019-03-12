@@ -1,6 +1,16 @@
 # Contributing
 First off, thank you for considering to contribute to Plopify!  Please note that the project is currently in the early stages of development, so the project structure and build/deployment processes are still solidifying.
 
+## Getting Started
+1. Make sure you have [Node.js](https://nodejs.org) and [Yarn](https://yarnpkg.com) installed
+2. Fork this repo, then clone your copy: `git clone https://github.com/:your-username/plopify.git`
+3. `yarn install` to install the project dependencies
+4. `yarn build` to build your local copy
+5. `yarn link` to test the `plopify` cli during development (you can run `yarn unlink` later to remove it)
+6. `yarn lint`, `yarn test`, and `plopify -v` to make sure your local copy is completely setup and ready for development and testing
+
+During development, it's recommended to use `yarn watch` to have your changes update in realtime, rather than having to run `yarn build` repeatedly.
+
 ## General Guidelines
 Regardless of how you contribute, you need to keep the following in mind:
 

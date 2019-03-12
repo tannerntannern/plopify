@@ -87,6 +87,7 @@ const UpdatePolicy = t.intersection([
 ]);
 
 export let RCSchema = t.type({
+	// injectConfig: withDefault(t.boolean, false),
 	prompts: t.array(Question),
 	updatePolicies: t.array(UpdatePolicy),
 	hooks: t.type({
