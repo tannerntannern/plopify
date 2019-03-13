@@ -11,7 +11,8 @@ export const header = chalk.bold.bgBlue(` ${packageJson.name} `) + chalk.bold.bg
 
 type Result = {prettyMessage: string, data?: any};
 type Status = {task: string, status: 'running' | 'failure' | 'success'};
-type APIFunction<A extends Array<any>> = (...args: A) => ProgressPromise<Result, Status>;
+type Input = {[key: string]: any};
+type APIFunction<A extends Array<any>> = (...args: A) => ProgressPromise<Result, Status, Input>;
 
 /**
  * Converts the given function from the API into a CLI function with pretty status reports and error handling.
@@ -33,7 +34,7 @@ export const commandify = <A extends Array<any>>(apiFunction: APIFunction<A>, no
 				case 'success':
 					logStatus(true);
 				}
-			}));
+			}).promise());
 
 			// Display the result of the command
 			console.log();
