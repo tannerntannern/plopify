@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 
 import {logStatus} from './misc';
-import {ProgressPromise} from './progress-promise';
+import {progressPromise, ProgressPromise, ProgressPromiseExecutor} from './progress-promise';
 const packageJson = require('../../package.json');
 
 /**
@@ -10,37 +10,54 @@ const packageJson = require('../../package.json');
 export const header = chalk.bold.bgBlue(` ${packageJson.name} `) + chalk.bold.bgYellow(` v${packageJson.version} `);
 
 type Result = {prettyMessage: string, data?: any};
-type Status = {task: string, status: 'running' | 'failure' | 'success'};
+type Status = {type: 'taskComplete', status: boolean} | {type: 'newTask', task: string} | {type: 'warning', message: string};
 type Input = {[key: string]: any};
-type APIFunction<A extends Array<any>> = (...args: A) => ProgressPromise<Result, Status, Input>;
+
+type StandarizableFunction<A extends Array<any>> = (...args: A) => ProgressPromiseExecutor<Result, Status, Input>;
+type StandardFunction<A extends Array<any>> = (...args: A) => ProgressPromise<Result, Status, Input>;
+
+/**
+ * Takes a function and returns a new one that is safe to give to commandify().  This helps keep the various API
+ * functions consistent.
+ */
+export const stdFunction = <A extends Array<any>>(func: StandarizableFunction<A>): StandardFunction<A> =>
+	(...args: A) => progressPromise<Result, Status, Input>(func(...args));
 
 /**
  * Converts the given function from the API into a CLI function with pretty status reports and error handling.
  */
-export const commandify = <A extends Array<any>>(apiFunction: APIFunction<A>, noHeader: boolean = false) => (
+export const commandify = <A extends Array<any>>(stdFunc: StandardFunction<A>, noHeader: boolean = false) => (
 	async (...args: A) => {
 		try {
 			if (!noHeader) console.log(header);
 
 			// Run the apiFunction, hooking into .status() to print out updates
-			const result = await (apiFunction(...args).status(data => {
-				switch (data.status) {
-				case 'running':
-					process.stdout.write(`${data.task}... `);
-					break;
-				case 'failure':
-					logStatus(false);
-					break;
-				case 'success':
-					logStatus(true);
-				}
-			}).promise());
+			const result = await (
+				stdFunc(...args)
+					.status(data => {
+						switch (data.type) {
+						case 'newTask':
+							process.stdout.write(`${data.task}... `);
+							break;
+						case 'taskComplete':
+							logStatus(data.status);
+							break;
+						case 'warning':
+							console.log();
+							console.log(chalk.yellow('WARNING:'), data.message);
+							console.log();
+							break;
+						}
+					})
+					.promise()
+			);
 
 			// Display the result of the command
 			console.log();
 			console.log(result.prettyMessage);
 		} catch (e) {
-			console.log(chalk.red('Error:'), e.message);
+			console.log();
+			console.log(chalk.red('ERROR:'), e);
 			process.exit(1);
 		}
 	}

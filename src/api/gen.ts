@@ -1,5 +1,5 @@
-import {progressPromise} from '../util/progress-promise';
+import {stdFunction} from '../util/commandify';
 
-export const gen = () => progressPromise((resolve, reject, status) => {
+export const gen = stdFunction(() => (resolve, reject, status) => {
 	// TODO: ...
 });

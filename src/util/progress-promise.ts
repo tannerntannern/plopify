@@ -13,7 +13,7 @@ type PromiseExecutor<T> = (resolve: Resolve<T>, reject?: Reject) => void;
 /**
  * Identical to the executor that's passed to PromiseConstructor, with the addition of status and input functions.
  */
-type ProgressPromiseExecutor<R, S, I> = (resolve: Resolve<R>, reject?: Reject, status?: Status<S>, input?: Input<I>) => void;
+export type ProgressPromiseExecutor<R, S, I> = (resolve: Resolve<R>, reject?: Reject, status?: Status<S>, input?: Input<I>) => void;
 
 /**
  * Functionally similar to Promise<T>.
