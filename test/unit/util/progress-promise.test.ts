@@ -91,23 +91,4 @@ describe('progressPromise(...)', () => {
 			expect(statusReceiver.calledWithExactly('got password')).to.be.true;
 		});
 	});
-
-	// TODO: if this works, then why does the no input case not work?
-	describe('unrelated test', () => {
-		const asyncInner = async () => {
-			throw new Error('Inner error');
-		};
-
-		const asyncOuter = async () => {
-			await asyncInner();
-		};
-
-		it('should work', async () => {
-			try {
-				await asyncOuter();
-			} catch (e) {
-				expect(e.message).to.equal('Inner error');
-			}
-		});
-	});
 });

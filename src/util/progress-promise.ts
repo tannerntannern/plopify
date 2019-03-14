@@ -75,8 +75,15 @@ export const progressPromise = <R = any, S = any, I = {[key: string]: any}>(exec
 		throw new Error(`Input "${key}" must be supplied`);
 	};
 
+	// Builds a PromiseExecutor from the given ProgressPromiseExecutor.
 	const promiseExecutor = (): PromiseExecutor<R> =>
-		(resolve: Resolve<R>, reject: Reject) => executor(resolve, reject, status, input);
+		async (resolve: Resolve<R>, reject: Reject) => {
+			try {
+				await executor(resolve, reject, status, input);
+			} catch (e) {
+				reject(e);
+			}
+		};
 
 	return {
 		promise: () => new Promise<R>(promiseExecutor()),
