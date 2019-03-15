@@ -1,8 +1,7 @@
-import chalk from 'chalk';
 import {spawn} from 'child_process';
 
-import {confirm} from '../util/prompts';
 import {renderString} from '../util/templates';
+import {stdFunction} from '../util/commandify';
 
 /**
  * Executes a shell command and returns a Promise.  If the promise resolves, the command was successful; if it is
@@ -20,26 +19,25 @@ const shellCommand = (command: string, cwd: string): Promise<any> => {
 };
 
 /**
- * Processes the given hooks, returning true if all pass.
+ * TODO
  */
-export async function runHooks(hooks: string[], answers: {[key: string]: string}, cwd: string): Promise<boolean> {
+export const runHooks = stdFunction((hooks: string[], answers: {[key: string]: string}, cwd: string) => async (resolve, reject, status, input) => {
 	// Render any hooks that might have used {{prompt_answers}}
 	hooks = hooks.map(hook => renderString(hook, answers));
 
 	for (let hook of hooks) {
-		console.log(chalk.yellow('Running hook: `' + hook + '`...'));
+		status({type: 'newTask', task: 'Running hook: `' + hook + '`'});
 
 		try {
 			await shellCommand(hook, cwd);
+			status({type: 'taskComplete', status: true});
 		} catch (e) {
-			console.log(e.message);
-			console.log(chalk.red('Error in hook `' + hook + '`'));
-			if (!await confirm('Would you like to ignore this error and continue?')) {
-				return false;
-			}
+			status({type: 'taskComplete', status: false});
+			status({type: 'warning', severe: true, message: e.message});
+
+			if (!await input('ignoreError')) reject(e);
 		}
 	}
 
-	// If we make it here, everything was successful
-	return true;
-}
+	resolve({prettyMessage: 'Hooks complete'});
+});

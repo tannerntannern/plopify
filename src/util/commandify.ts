@@ -10,7 +10,7 @@ const packageJson = require('../../package.json');
 export const header = chalk.bold.bgBlue(` ${packageJson.name} `) + chalk.bold.bgYellow(` v${packageJson.version} `);
 
 type Result = {prettyMessage: string, data?: any};
-type Status = {type: 'taskComplete', status: boolean} | {type: 'newTask', task: string} | {type: 'warning', message: string};
+type Status = {type: 'taskComplete', status: boolean} | {type: 'newTask', task: string} | {type: 'warning', message: string, severe?: boolean};
 type Input = {[key: string]: any};
 
 type StandarizableFunction<A extends Array<any>> = (...args: A) => ProgressPromiseExecutor<Result, Status, Input>;
@@ -44,7 +44,7 @@ export const commandify = <A extends Array<any>>(stdFunc: StandardFunction<A>, n
 							break;
 						case 'warning':
 							console.log();
-							console.log(chalk.yellow('WARNING:'), data.message);
+							console.log(chalk[data.severe ? 'red' : 'yellow']('WARNING:'), data.message);
 							console.log();
 							break;
 						}
