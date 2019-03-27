@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 
 import {logStatus} from './misc';
-import {progressPromise, ProgressPromise, ProgressPromiseExecutor} from './progress-promise';
+import {covenant, Covenant, CovenantExecutor} from './covenant';
 const packageJson = require('../../package.json');
 
 /**
@@ -13,15 +13,15 @@ type Result = {prettyMessage: string, data?: any};
 type Status = {type: 'taskComplete', status: boolean} | {type: 'newTask', task: string} | {type: 'warning', message: string, severe?: boolean};
 type Input = {[key: string]: any};
 
-type StandarizableFunction<A extends Array<any>> = (...args: A) => ProgressPromiseExecutor<Result, Status, Input>;
-type StandardFunction<A extends Array<any>> = (...args: A) => ProgressPromise<Result, Status, Input>;
+type StandarizableFunction<A extends Array<any>> = (...args: A) => CovenantExecutor<Result, Status, Input>;
+type StandardFunction<A extends Array<any>> = (...args: A) => Covenant<Result, Status, Input>;
 
 /**
  * Takes a function and returns a new one that is safe to give to commandify().  This helps keep the various API
  * functions consistent.
  */
 export const stdFunction = <A extends Array<any>>(func: StandarizableFunction<A>): StandardFunction<A> =>
-	(...args: A) => progressPromise<Result, Status, Input>(func(...args));
+	(...args: A) => covenant<Result, Status, Input>(func(...args));
 
 /**
  * Converts the given function from the API into a CLI function with pretty status reports and error handling.

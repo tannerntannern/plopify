@@ -2,11 +2,13 @@ import 'mocha';
 import {expect} from 'chai';
 import * as sinon from 'sinon';
 
-import {progressPromise} from '../../../src/util/progress-promise';
+import {covenant} from '../../../src/util/covenant';
 
-describe('progressPromise(...)', () => {
+// TODO: add more tests for the new covenant() API
+
+describe('covenant(...)', () => {
 	describe('as "normal" promise', () => {
-		const simplePromiseLikeFunction = (succeed: boolean) => progressPromise<string>((resolve, reject) => {
+		const simplePromiseLikeFunction = (succeed: boolean) => covenant<string>((resolve, reject) => {
 			if (succeed) resolve('result');
 			else reject('somethin aint right');
 		});
@@ -29,7 +31,7 @@ describe('progressPromise(...)', () => {
 	});
 
 	describe('with status reporting', () => {
-		const buildArray = () => progressPromise<number[]>(async (resolve, reject, status) => {
+		const buildArray = () => covenant<number[]>(async (resolve, reject, status) => {
 			let array = [];
 			for (let i = 0; i < 3; i ++) {
 				status({msg: 'Pushing data', value: i});
@@ -60,7 +62,7 @@ describe('progressPromise(...)', () => {
 
 	describe('with input requests', () => {
 		const postInputSpy = sinon.fake();
-		const getPassword = () => progressPromise<number, string, any>(async (resolve, reject, status, input) => {
+		const getPassword = () => covenant<number, string, any>(async (resolve, reject, status, input) => {
 			status('asking for password');
 			const password = await input('password');
 			postInputSpy();
