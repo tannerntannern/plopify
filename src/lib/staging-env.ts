@@ -6,7 +6,7 @@ import * as validUrl from 'valid-url';
 import chalk from 'chalk';
 import {spawnSync} from 'child_process';
 
-import {stdFunction} from '../util/commandify';
+import {standardAdapter} from '../util/commandify';
 
 /**
  * Manages everything that has to do with the staging environment.
@@ -54,11 +54,11 @@ export const stagingEnv = (template: string) => {
 	/**
 	 * Provisions a staging environment given a template.
 	 */
-	const setup = stdFunction(() => (resolve, reject, status) => {
+	const setup = () => standardAdapter((resolve, reject, output) => {
 		// 1. Clean up any staging data that was orphaned from a previous run
 		const orphanRemains = fg.sync(path.resolve(__dirname, '.staging'), {dot: true, onlyDirectories: true});
 		if (orphanRemains.length > 0) {
-			status({
+			output({
 				type: 'warning',
 				message: 'Cleaning up old staging data.  This usually means that the previous plopify command did not complete properly.'
 			});
@@ -66,7 +66,7 @@ export const stagingEnv = (template: string) => {
 		}
 
 		// 2. Make sure template exists
-		status({type: 'newTask', task: 'Locating template'});
+		output({type: 'newTask', task: 'Locating template'});
 
 		let exists: boolean;
 		if (_templateType === 'local') {
@@ -76,7 +76,7 @@ export const stagingEnv = (template: string) => {
 			exists = output.status === 0;
 		}
 
-		status({type: 'taskComplete', status: exists});
+		output({type: 'taskComplete', status: exists});
 
 		if (!exists) {
 			let message;
@@ -92,7 +92,7 @@ export const stagingEnv = (template: string) => {
 
 		// 2b. Warn about local templates
 		if (_templateType === 'local') {
-			status({
+			output({
 				type: 'warning',
 				message: 'Using a local template will cause issues for collaborators.  Consider using a repo URL instead.'
 			});
@@ -104,13 +104,13 @@ export const stagingEnv = (template: string) => {
 
 		// 4. Clone the template repository if necessary
 		if (_templateType === 'remote') {
-			status({type: 'newTask', task: 'Downloading template'});
+			output({type: 'newTask', task: 'Downloading template'});
 
 			_templateDir = path.resolve(stagingDir, 'template');
 			fs.mkdirSync(_templateDir);
 			const result = spawnSync('git', ['clone', template, _templateDir]);
 
-			status({type: 'taskComplete', status: result.status === 0});
+			output({type: 'taskComplete', status: result.status === 0});
 
 			if (result.status !== 0) {
 				reject(new Error('There was a problem cloning the template repository:\n' + result.stderr));

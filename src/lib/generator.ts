@@ -6,15 +6,15 @@ import {getFileList} from '../util/files';
 import {renderString} from '../util/templates';
 import {EjectedRCSchema, RCSchema} from '../schemas';
 import {StagingEnv} from './staging-env';
-import {stdFunction} from '../util/commandify';
+import {standardAdapter} from '../util/commandify';
 
 const packageJson = require('../../package.json');
 
 /**
  * Takes a templateDir and generates a new instance to outDir using the given data.
  */
-export const renderTemplate = stdFunction((staging: StagingEnv, data: {[key: string]: any}, outDir: string) => (resolve, reject, status) => {
-	status({type: 'newTask', task: 'Generating project'});
+export const renderTemplate = (staging: StagingEnv, data: {[key: string]: any}, outDir: string) => standardAdapter((resolve, reject, output) => {
+	output({type: 'newTask', task: 'Generating project'});
 
 	// Collect the relative file paths/names of every file in the template (excluding .plopifyrc.js)
 	const templateDir = staging.templateDir();
@@ -38,7 +38,7 @@ export const renderTemplate = stdFunction((staging: StagingEnv, data: {[key: str
 	});
 	fs.writeFileSync(path.resolve(outDir, '.plopifyrc.json'), JSON.stringify(plopifyRcData, null, 2));
 
-	status({type: 'taskComplete', status: true});
+	output({type: 'taskComplete', status: true});
 
 	const totalFiles = templateFiles.length + 1;
 	resolve({

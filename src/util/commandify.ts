@@ -1,7 +1,8 @@
 import chalk from 'chalk';
+import {simplePrompt} from './prompts';
+import {makeAdapter, Adapter, AdapterExecutor} from 'adapter';
 
 import {logStatus} from './misc';
-import {covenant, Covenant, CovenantExecutor} from './covenant';
 const packageJson = require('../../package.json');
 
 /**
@@ -10,23 +11,23 @@ const packageJson = require('../../package.json');
 export const header = chalk.bold.bgBlue(` ${packageJson.name} `) + chalk.bold.bgYellow(` v${packageJson.version} `);
 
 type Result = {prettyMessage: string, data?: any};
-type Status = {type: 'taskComplete', status: boolean} | {type: 'newTask', task: string} | {type: 'warning', message: string, severe?: boolean};
-type Input = {[key: string]: any};
+type Output = {type: 'taskComplete', status: boolean} | {type: 'newTask', task: string} | {type: 'warning', message: string, severe?: boolean};
+type Input = {[key: string]: {
+	return: any, options: {type: 'input' | 'confirm', message: string}
+}};
 
-type StandarizableFunction<A extends Array<any>> = (...args: A) => CovenantExecutor<Result, Status, Input>;
-type StandardFunction<A extends Array<any>> = (...args: A) => Covenant<Result, Status, Input>;
+type StandardAdapter = Adapter<Result, Output, Input>;
 
 /**
- * Takes a function and returns a new one that is safe to give to commandify().  This helps keep the various API
- * functions consistent.
+ * Shortcut for `makeAdapter<...>(...)` that has all the standard typing setup for you.
  */
-export const stdFunction = <A extends Array<any>>(func: StandarizableFunction<A>): StandardFunction<A> =>
-	(...args: A) => covenant<Result, Status, Input>(func(...args));
+export const standardAdapter = (executor: AdapterExecutor<Result, Output, Input>): StandardAdapter =>
+	makeAdapter<Result, Output, Input>(executor);
 
 /**
  * Converts the given function from the API into a CLI function with pretty status reports and error handling.
  */
-export const commandify = <A extends Array<any>>(stdFunc: StandardFunction<A>, noHeader: boolean = false) => (
+export const commandify = <A extends any[]>(stdFunc: (...args: A) => StandardAdapter, noHeader: boolean = false) => (
 	async (...args: A) => {
 		try {
 			if (!noHeader) console.log(header);
@@ -34,7 +35,7 @@ export const commandify = <A extends Array<any>>(stdFunc: StandardFunction<A>, n
 			// Run the apiFunction, hooking into .status() to print out updates
 			const result = await (
 				stdFunc(...args)
-					.status(data => {
+					.output(data => {
 						switch (data.type) {
 						case 'newTask':
 							process.stdout.write(`${data.task}... `);
@@ -49,7 +50,8 @@ export const commandify = <A extends Array<any>>(stdFunc: StandardFunction<A>, n
 							break;
 						}
 					})
-					.promise()
+					.input(async (key, options) => await simplePrompt(options))
+					.exec()
 			);
 
 			// Display the result of the command

@@ -3,13 +3,13 @@ import * as fg from 'fast-glob';
 import * as fse from 'fs-extra';
 import chalk from 'chalk';
 
-import {stdFunction} from '../util/commandify';
+import {standardAdapter} from '../util/commandify';
 
 /**
  * Plops a "template template" into the given directory.
  */
-export const init = stdFunction((dir: string) => (resolve, reject, status) => {
-	status({type: 'newTask', task: 'Copying files'});
+export const init = (dir: string) => standardAdapter((resolve, reject, output) => {
+	output({type: 'newTask', task: 'Copying files'});
 
 	const outDir = path.resolve(dir);
 	const templateDir = path.resolve(__dirname, '../../templates/project-template/');
@@ -18,9 +18,9 @@ export const init = stdFunction((dir: string) => (resolve, reject, status) => {
 	try {
 		fse.mkdirpSync(outDir);
 		fse.copySync(templateDir, outDir);
-		status({type: 'taskComplete', status: true});
+		output({type: 'taskComplete', status: true});
 	} catch (e) {
-		status({type: 'taskComplete', status: false});
+		output({type: 'taskComplete', status: false});
 		reject(e);
 	}
 

@@ -3,12 +3,20 @@ import * as bcrypt from 'bcrypt';
 
 /**
  * Quick, dirty utility to get confirmation from the user.
+ * @deprecated
  */
 export const confirm = async (message: string): Promise<boolean> => (await prompt([{
 	type: 'confirm',
 	name: 'confirmation',
 	message: message
 }]) as any).confirmation;
+
+/**
+ * A stripped down inquirer-prompt based function that gets a single value from the user.
+ */
+export const simplePrompt = async (options) => (await prompt([{
+	name: 'value', type: options.type, message: options.message
+}]) as any).value;
 
 /**
  * Gets a password from the user without confirmation using a custom message.

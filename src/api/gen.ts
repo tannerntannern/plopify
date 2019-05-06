@@ -4,7 +4,7 @@ import * as inquirer from 'inquirer';
 import chalk from 'chalk';
 import loader from 'rc.ts';
 
-import {stdFunction} from '../util/commandify';
+import {standardAdapter} from '../util/commandify';
 import {stagingEnv} from '../lib/staging-env';
 import {renderTemplate} from '../lib/generator';
 import {arrayify} from '../util/arrays';
@@ -14,10 +14,10 @@ import {RCSchema} from '../schemas';
 /**
  * Generates a project in outdir, given a remote or local template.
  */
-export const gen = stdFunction((template: string, outdir: string) => async (resolve, reject, status) => {
+export const gen = (template: string, outdir: string) => standardAdapter( async (resolve, reject, output) => {
 	const staging = stagingEnv(template);
 
-	await (staging.setup().status(status).promise());
+	await (staging.setup().output(output).promise());
 
 	const templateDir = staging.templateDir();
 	const config = loader(RCSchema).loadConfigFile(path.resolve(templateDir, '.plopifyrc.js'));
@@ -26,13 +26,12 @@ export const gen = stdFunction((template: string, outdir: string) => async (reso
 	const fullOutDir = path.resolve(outdir);
 	fse.mkdirpSync(fullOutDir);
 
-	// TODO: input needed
-	await (runHooks(arrayify(config.hooks.preGenerate), answers, fullOutDir).status(status).promise());
+	await (runHooks(arrayify(config.hooks.preGenerate), answers, fullOutDir).output(output).promise());
 
-	const totalFiles = (await renderTemplate(staging, answers, fullOutDir).status(status).promise()).data.files;
+	const totalFiles = (await renderTemplate(staging, answers, fullOutDir).output(output).promise()).data.files;
 	staging.cleanUp();
 
-	await (runHooks(arrayify(config.hooks.postGenerate), answers, fullOutDir).status(status).promise());
+	await (runHooks(arrayify(config.hooks.postGenerate), answers, fullOutDir).output(output).promise());
 
 	resolve({
 		prettyMessage: `${chalk.bold.bgGreen(' SUCCESS ')} ${chalk.yellow('+' + totalFiles)} files added at ${chalk.underline.blue(fullOutDir)}`,

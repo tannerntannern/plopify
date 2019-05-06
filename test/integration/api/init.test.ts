@@ -16,14 +16,14 @@ describe('API: init()', () => {
 	after(() => cleanTestingGrounds());
 
 	it('should generate files and report status properly', async () => {
-		const status = sinon.fake();
+		const output = sinon.fake();
 
-		const result = (await init(testingDir).status(status).promise());
+		const result = (await init(testingDir).output(output).promise());
 		const actualFileCount = fg.sync(path.resolve(testingDir, '**/*'), {dot: true}).length;
 
 		expect(result.data.files).to.equal(actualFileCount);
-		expect(status.callCount).to.equal(2);
-		expect(status.calledWithExactly({type: 'newTask', task: 'Copying files'})).to.be.true;
-		expect(status.calledWithExactly({type: 'taskComplete', status: true})).to.be.true;
+		expect(output.callCount).to.equal(2);
+		expect(output.calledWithExactly({type: 'newTask', task: 'Copying files'})).to.be.true;
+		expect(output.calledWithExactly({type: 'taskComplete', status: true})).to.be.true;
 	});
 });
