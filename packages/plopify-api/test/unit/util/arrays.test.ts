@@ -1,6 +1,6 @@
 import 'mocha';
-import {expect} from 'chai';
-import {unique, intersection, union, difference, arrayify} from '../../../src/util/arrays';
+import { expect } from 'chai';
+import { unique, intersection, union, difference, arrayify } from '../../../src/util/arrays';
 
 describe('Array utilities', () => {
 	describe('unique()', () => {

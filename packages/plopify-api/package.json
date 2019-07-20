@@ -1,0 +1,60 @@
+{
+  "name": "plopify-api",
+  "version": "1.0.0-alpha.0",
+  "description": "Node API that backs the plopify-cli",
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "main": "dist/api/index.js",
+  "module": "dist/api/index.js",
+  "types": "dist/api/index.d.ts",
+  "scripts": {
+    "build:clean": "rimraf dist",
+    "build:ts": "tsc",
+    "build": "yarn build:clean && yarn build:ts",
+    "lint": "eslint src/**/*.ts",
+    "coverage": "nyc report",
+    "coveralls": "cat ./coverage/lcov.info | coveralls",
+    "release": "standard-version -a"
+  },
+  "standard-version": {
+    "scripts": {
+      "prerelease": "yarn lint && yarn test && yarn build"
+    }
+  },
+  "dependencies": {
+    "adapter": "^1.0.0-beta.7",
+    "axios": "^0.19.0",
+    "bcrypt": "^3.0.4",
+    "cryptr": "^4.0.2",
+    "fast-glob": "^3.0.4",
+    "fs-extra": "^8.1.0",
+    "handlebars": "^4.1.0",
+    "home-or-tmp": "^3.0.0",
+    "io-ts": "^2.0.0",
+    "md5-file": "^4.0.0",
+    "rc.ts": "^1.2.0",
+    "valid-url": "^1.0.9"
+  },
+  "engines": {
+    "node": ">=8"
+  },
+  "keywords": [
+    "template",
+    "templating",
+    "scaffold",
+    "scaffolding",
+    "plop",
+    "plop.js",
+    "project scaffolding",
+    "project templating"
+  ],
+  "homepage": "https://tannerntannern.github.io/plopify-api",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tannerntannern/plopify-api.git"
+  },
+  "author": "Tanner Nielsen <tannerntannern@gmail.com>",
+  "license": "MIT"
+}

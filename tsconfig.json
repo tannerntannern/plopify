@@ -6,11 +6,7 @@
     "types": ["node"],
     "moduleResolution": "node",
     "sourceMap": false,
-    "outDir": "dist"
   },
-  "include": [
-    "src/**/*.ts"
-  ],
   "exclude": [
     "node_modules"
   ]

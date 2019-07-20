@@ -1,0 +1,55 @@
+{
+  "name": "plopify-cli",
+  "version": "1.0.0-alpha.0",
+  "description": "A commandline interface for the plopify API.",
+  "files": [
+    "dist"
+  ],
+  "main": "dist/cli/plopify.js",
+  "bin": {
+    "plopify": "dist/cli/plopify.js"
+  },
+  "scripts": {
+    "build:clean": "rimraf dist",
+    "build:ts": "tsc",
+    "build": "yarn build:clean && yarn build:ts",
+    "lint": "eslint src/**/*.ts",
+    "coverage": "nyc report",
+    "coveralls": "cat ./coverage/lcov.info | coveralls",
+    "release": "standard-version -a"
+  },
+  "standard-version": {
+    "scripts": {
+      "prerelease": "yarn lint && yarn test && yarn build"
+    }
+  },
+  "dependencies": {
+    "@types/inquirer": "^6.0.3",
+    "chalk": "^2.4.2",
+    "commander": "^2.19.0",
+    "inquirer": "^6.2.2",
+    "inquirer-emoji": "^1.0.2",
+    "plopify-api": "^1.0.0-alpha.0",
+    "string-argv": "^0.3.0"
+  },
+  "engines": {
+    "node": ">=8"
+  },
+  "keywords": [
+    "template",
+    "templating",
+    "scaffold",
+    "scaffolding",
+    "plop",
+    "plop.js",
+    "project scaffolding",
+    "project templating"
+  ],
+  "homepage": "https://tannerntannern.github.io/plopify-cli",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tannerntannern/plopify-cli.git"
+  },
+  "author": "Tanner Nielsen <tannerntannern@gmail.com>",
+  "license": "MIT"
+}

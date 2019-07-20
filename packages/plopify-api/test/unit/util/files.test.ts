@@ -1,8 +1,8 @@
 import * as mock from 'mock-fs';
 import 'mocha';
-import {expect} from 'chai';
+import { expect } from 'chai';
 
-import {readFile, readFileLines, getFileList} from '../../../src/util/files';
+import { readFile, readFileLines, getFileList } from '../../../src/util/files';
 
 describe('File utilities', () => {
 	before(() => mock({

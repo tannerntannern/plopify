@@ -10,7 +10,7 @@ A Plop-inspired tool that takes project templating to the next level.
 [[ INSERT COOL DEMO GIF HERE ]]
 
 ## What is it?
-Plopify is a CLI-based project scaffolding tool with several unique features:
+Plopify is a project scaffolding tool with several unique features:
 * intelligent mechanism for updating projects when the templates they're based on have changed
 * global config for frequently used values
 * built-in services for provisioning GitHub, Travis CI, etc.
