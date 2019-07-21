@@ -18,7 +18,7 @@ describe('API: init()', () => {
 	it('should generate files and report status properly', async () => {
 		const output = sinon.fake();
 
-		const result = (await init(testingDir).output(output).promise());
+		const result = (await init(testingDir).output(output).exec());
 		const actualFileCount = fg.sync(path.resolve(testingDir, '**/*'), { dot: true }).length;
 
 		expect(result.files).to.equal(actualFileCount);

@@ -3,6 +3,11 @@ import * as fg from 'fast-glob';
 import * as path from 'path';
 
 /**
+ * path.resolve() without windows separators.
+ */
+const unixResolve = (...pathSegments: string[]) => path.resolve(...pathSegments).replace(/\\/g, '/');
+
+/**
  * Creates a unique directory within test/integration/testing-grounds and returns the path.
  */
 export const reserveTestingDir = (): string => {
@@ -19,6 +24,6 @@ export const reserveTestingDir = (): string => {
  */
 export const cleanTestingGrounds = () => {
 	fg
-		.sync(path.resolve(__dirname, 'testing-grounds/*'), {onlyDirectories: true})
+		.sync(unixResolve(__dirname, 'testing-grounds/*'), {onlyDirectories: true})
 		.forEach(dir => fse.removeSync(dir));
 };
