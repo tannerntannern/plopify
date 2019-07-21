@@ -4,14 +4,13 @@ const chalk = require('chalk');
 const { execSync } = require('child_process');
 
 /**
- * Executes the given yarn command in the given package (within <PROJECT_ROOT>/packages)
+ * Executes the given shell command in the given package (within <PROJECT_ROOT>/packages)
  */
 const execInPackage = (cmd, pkg) => {
-	const fullCmd = `yarn ${cmd}`;
 	const fullDir = path.resolve('packages', pkg);
 
-	console.log(chalk.blueBright(fullDir) + ': ' + chalk.green(fullCmd));
-	execSync(fullCmd, { cwd: fullDir, stdio: 'inherit' });
+	console.log(chalk.blueBright(fullDir) + ': ' + chalk.green(cmd));
+	execSync(cmd, { cwd: fullDir, stdio: 'inherit' });
 	console.log();
 };
 

@@ -5,7 +5,7 @@
     "module": "commonjs",
     "types": ["node"],
     "moduleResolution": "node",
-    "sourceMap": false,
+    "sourceMap": false
   },
   "exclude": [
     "node_modules"

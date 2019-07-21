@@ -7,8 +7,19 @@
   ],
   "scripts": {
     "loop": "node scripts/loop.js",
-    "build": "yarn loop build",
-    "lint": "eslint packages/**/*.ts"
+    "build:clean": "rimraf packages/*/dist",
+    "build:ts": "yarn loop tsc",
+    "build": "yarn build:clean && yarn build:ts",
+    "lint": "eslint packages/**/*.ts",
+    "test": "nyc mocha",
+    "coverage": "nyc report",
+    "coveralls": "cat coverage/lcov.info | coveralls",
+    "release": "standard-version -a"
+  },
+  "standard-version": {
+    "scripts": {
+      "prerelease": "yarn lint && yarn test && yarn build"
+    }
   },
   "devDependencies": {
     "@commitlint/cli": "^8.1.0",
@@ -25,7 +36,7 @@
     "husky": "^3.0.1",
     "mocha": "^6.2.0",
     "mock-fs": "^4.8.0",
-    "nyc": "12.x.x",
+    "nyc": "14.1.1",
     "rimraf": "^2.6.3",
     "sinon": "^7.2.7",
     "standard-version": "^6.0.1",

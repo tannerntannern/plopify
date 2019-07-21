@@ -3,15 +3,12 @@
 	".ts"
   ],
   "include": [
-	"./src/**/*.ts"
-  ],
-  "exclude": [
-	"./src/schemas.ts",
-	"./src/util/misc.ts"
+	"packages/*/src/**/*.ts"
   ],
   "reporter": [
 	"html",
 	"lcov"
   ],
-  "all": true
+  "all": true,
+  "cache": false
 }

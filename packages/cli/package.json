@@ -9,20 +9,6 @@
   "bin": {
     "plopify": "dist/cli/plopify.js"
   },
-  "scripts": {
-    "build:clean": "rimraf dist",
-    "build:ts": "tsc",
-    "build": "yarn build:clean && yarn build:ts",
-    "lint": "eslint src/**/*.ts",
-    "coverage": "nyc report",
-    "coveralls": "cat ./coverage/lcov.info | coveralls",
-    "release": "standard-version -a"
-  },
-  "standard-version": {
-    "scripts": {
-      "prerelease": "yarn lint && yarn test && yarn build"
-    }
-  },
   "dependencies": {
     "@types/inquirer": "^6.0.3",
     "chalk": "^2.4.2",
@@ -45,10 +31,10 @@
     "project scaffolding",
     "project templating"
   ],
-  "homepage": "https://tannerntannern.github.io/plopify-cli",
+  "homepage": "https://tannerntannern.github.io/plopify",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tannerntannern/plopify-cli.git"
+    "url": "https://github.com/tannerntannern/plopify.git"
   },
   "author": "Tanner Nielsen <tannerntannern@gmail.com>",
   "license": "MIT"
