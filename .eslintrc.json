@@ -13,7 +13,7 @@
   "rules": {
     "no-console": "off",
     "no-undef": "off",
-    "no-unused-vars": "warn",
+    "no-unused-vars": "off",
     "indent": ["error", "tab"],
     "quotes": ["error", "single"],
     "semi": ["error", "always"],
