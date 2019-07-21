@@ -17,11 +17,11 @@ script:
   - yarn test
 after_success:
   - yarn coverage
-  - yarn coveralls
+  - yarn on-node 12 "yarn coveralls"
 
 cache:
   directories:
-  - node_modules
+    - node_modules
 
 #deploy:
 #  provider: npm

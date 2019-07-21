@@ -7,6 +7,7 @@
   ],
   "scripts": {
     "loop": "node scripts/loop.js",
+    "on-node": "node scripts/on-node.js",
     "build:clean": "rimraf packages/*/dist",
     "build:ts": "yarn loop tsc",
     "build": "yarn build:clean && yarn build:ts",
