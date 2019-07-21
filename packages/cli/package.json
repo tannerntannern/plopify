@@ -19,7 +19,7 @@
     "string-argv": "^0.3.0"
   },
   "engines": {
-    "node": ">=8"
+    "node": "^8 || >=10"
   },
   "keywords": [
     "template",
