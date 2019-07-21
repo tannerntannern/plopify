@@ -15,7 +15,7 @@ type InputTypes = {
 
 type OptionsBase = { message: string, default?: string };
 type InputOptions = {
-	confirm: OptionsBase,
+	confirm: Omit<OptionsBase, 'default'>,
 	input: OptionsBase,
 	password: OptionsBase,
 	list: OptionsBase & { choices: string[] }

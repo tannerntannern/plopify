@@ -36,8 +36,10 @@ export type GuessAndCheckPasswordKeys = {'password': 'password'};
 export const guessAndCheckPassword = (passwordHash: string) => standardAdapter<GuessAndCheckPasswordKeys, string>(async (input, output) => {
 	if (passwordCache !== null) return passwordCache;
 
+	// eslint-disable-next-line require-atomic-updates
 	passwordCache = await input('password', 'password', { message: 'Enter your password:' });
 	while (!await bcrypt.compare(passwordCache, passwordHash)) {
+		// eslint-disable-next-line require-atomic-updates
 		passwordCache = await input('password', 'password', { message: 'Incorrect password. Try again:' });
 	}
 
