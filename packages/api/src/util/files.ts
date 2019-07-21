@@ -3,6 +3,11 @@ import * as fg from 'fast-glob';
 import * as path from 'path';
 
 /**
+ * path.resolve() without windows separators.
+ */
+export const unixResolve = (...pathSegments: string[]) => path.resolve(...pathSegments).replace(/\\/g, '/');
+
+/**
  * Attempts to read a file if it exists and returns its string content.  Otherwise returns null.
  */
 export const readFile = (file: string): string | null => {
@@ -28,10 +33,10 @@ export const readFileLines = (file: string): string[] | null => {
  * Gets a (relative) list of all the files in a given directory, excluding those in the given ignore list.
  */
 export const getFileList = (dir: string, ignore: string[]) => {
-	const trim = path.resolve(dir).length + 1; // path must be resolved because the input dir might not be
-	const absoluteIgnore = ignore.map(file => path.resolve(dir, file));
+	const trim = unixResolve(dir).length + 1; // path must be resolved because the input dir might not be
+	const absoluteIgnore = ignore.map(file => unixResolve(dir, file));
 
 	return fg
-		.sync(path.resolve(dir, '**/*'), { dot: true, ignore: absoluteIgnore })
+		.sync(unixResolve(dir, '**/*'), { dot: true, ignore: absoluteIgnore })
 		.map((file: string) => file.substr(trim));
 };

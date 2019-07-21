@@ -1,11 +1,7 @@
 import * as fse from 'fs-extra';
 import * as fg from 'fast-glob';
 import * as path from 'path';
-
-/**
- * path.resolve() without windows separators.
- */
-const unixResolve = (...pathSegments: string[]) => path.resolve(...pathSegments).replace(/\\/g, '/');
+import { unixResolve } from '../../src/util/files';
 
 /**
  * Creates a unique directory within test/integration/testing-grounds and returns the path.
