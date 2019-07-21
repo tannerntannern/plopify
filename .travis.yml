@@ -1,6 +1,6 @@
 os:
   - linux
-#  - windows
+  - windows
 #  - osx
 
 language: node_js
@@ -31,5 +31,5 @@ cache:
 #  on:
 #    tags: true
 #    branch: master
-#    node: '8'
+#    node: '12'
 #    repo: tannerntannern/plopify
