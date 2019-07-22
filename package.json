@@ -6,6 +6,7 @@
     "packages/*"
   ],
   "scripts": {
+    "plopify": "node packages/cli/dist/cli/plopify.js",
     "loop": "node scripts/loop.js",
     "on-node": "node scripts/on-node.js",
     "build:clean": "rimraf packages/*/dist",

@@ -1,25 +1,11 @@
 #!/usr/bin/env node
 import * as path from 'path';
 import * as program from 'commander';
-import chalk from 'chalk';
 
 import {header} from '../util/misc';
 // import globalConfig from '../lib/global-config';
 
 // const conf = globalConfig(path.resolve(__dirname, '..'));
-
-// Turns a plain async function into formatted command
-const commandify = (func: (...args) => any, noHeader: boolean = false) => {
-	return async (...args) => {
-		try {
-			if (!noHeader) console.log(header);
-			await func.apply(null, args);
-		} catch (e) {
-			console.log(chalk.red('Error:'), e.message);
-			process.exit(1);
-		}
-	};
-};
 
 // program
 // 	.command('init')

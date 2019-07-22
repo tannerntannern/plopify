@@ -1,8 +1,8 @@
 import chalk from 'chalk';
-import {simplePrompt} from './prompts';
-import {makeAdapter, Adapter, AdapterExecutor} from 'adapter';
+import { simplePrompt } from './prompts';
+import { makeAdapter, Adapter, AdapterExecutor } from 'adapter';
 
-import {logStatus} from './misc';
+import { logStatus } from './misc';
 const packageJson = require('../../package.json');
 
 /**
@@ -10,8 +10,11 @@ const packageJson = require('../../package.json');
  */
 export const header = chalk.bold.bgBlue(` ${packageJson.name} `) + chalk.bold.bgYellow(` v${packageJson.version} `);
 
-type Result = {prettyMessage: string, data?: any};
-type Output = {type: 'taskComplete', status: boolean} | {type: 'newTask', task: string} | {type: 'warning', message: string, severe?: boolean};
+type Result = { prettyMessage: string, data?: any };
+type Output =
+	{ type: 'taskComplete', status: boolean }
+	| { type: 'newTask', task: string }
+	| { type: 'warning', message: string, severe?: boolean };
 
 type OptionsBase = { message: string };
 type Input = {

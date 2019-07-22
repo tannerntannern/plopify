@@ -4,8 +4,7 @@ import * as inquirerEmoji from 'inquirer-emoji';
 import * as program from 'commander';
 
 import * as api from 'plopify-api';
-import {commandify} from '../util/commandify';
-// import {updateCmd} from '../lib/updater';
+import { commandify } from '../util/commandify';
 
 const packageJson = require('../../package.json');
 
@@ -15,21 +14,21 @@ inquirer.registerPrompt('emoji', inquirerEmoji);
 program
 	.version(packageJson.version, '-v, --version');
 
-// program
-// 	.command('init <dir>')
-// 	.description('Generates some starter code to kickstart your template (a "template for your template," if you will)')
-// 	.action(commandify(api.init));
+program
+	.command('init <dir>')
+	.description('Generates some starter code to kickstart your template (a "template for your template," if you will)')
+	.action(commandify(api.init));
 
-// program
-// 	.command('gen <template> <outdir>')
-// 	.description('Generates a new project based on the given template')
-// 	.action(commandify(api.gen));
+program
+	.command('gen <template> <outdir>')
+	.description('Generates a new project based on the given template')
+	.action(commandify(api.gen));
 
 // program
 // 	.command('update [project]')
 // 	.description('Updates an existing project based on changes from the template')
 // 	.option('-p --prompts', 'prompt the user for input again instead of using the saved answers')
-// 	.action(updateCmd);
+// 	.action(commandify(api.update));
 
 // Note: these commands are implemented in another file, marked by their lack of an `.action(...)` clause
 program
