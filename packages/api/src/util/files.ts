@@ -2,6 +2,8 @@ import * as fs from 'fs';
 import * as fg from 'fast-glob';
 import * as path from 'path';
 
+import { fgBaseConfig } from './misc';
+
 /**
  * path.resolve() without windows separators.
  */
@@ -37,6 +39,10 @@ export const getFileList = (dir: string, ignore: string[]) => {
 	const absoluteIgnore = ignore.map(file => unixResolve(dir, file));
 
 	return fg
-		.sync(unixResolve(dir, '**/*'), { dot: true, ignore: absoluteIgnore })
-		.map((file: string) => file.substr(trim));
+		.sync(unixResolve(dir, '**/*'), {
+			...fgBaseConfig,
+			dot: true,
+			ignore: absoluteIgnore,
+		})
+		.map((entry) => entry.path.substr(trim));
 };

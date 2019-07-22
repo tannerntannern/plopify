@@ -1,14 +1,14 @@
 os:
   - linux
-#  - windows
   - osx
+#  - windows
 
 language: node_js
 node_js:
   - '8'
-#  - '10'
-#  - '11'
-#  - '12'
+  - '10'
+  - '11'
+  - '12'
 
 before_script:
   - yarn install
@@ -29,7 +29,8 @@ cache:
 #  api_key:
 #    secure: TnaC2/05248Ucv++wr3Pc54zF8ptbAuCK/8iOZrpBrD/xrglxL9zz76DT+zvJZrZWs8oIRNBMPXR27k7OIFIwYSDwrC/y1c87vA29akSnAj/yWbOh1KsxkaGE1QOYuGcOOI5Atz/tUpmx7ORbIVYTYlSmkWjg7EyZJRiLygdicOQRXi7gyoN01G9hcc+Ba1Owp6BP2ZR++84Ry3UXpHpEgKXhmGjC/cqYp1Ru5rSSTsJHVEchE24t9CqtDtb8JqDlddIBkpnv/hl+yLJ98rIHAr3M/bOypfpk8FIV2k5MqwzQcgYsaDazLU637S2pURk+7BKsbADK9vy/DHWh9UbtwS16NSq4OXAFHIEW+h2tqYaZIo6oOJf+IbNh/lHAlbXcAnLRIgehBWC3imlzekU65TCV7MN35UXEBQV1EK7afBONxhOTikJ/495vAS1jo/8oZIe031KxlOpQv37Owj5+yNsrpHKgOsppE+9YVXqGagofrPklpzaCrIgPEtSQJ+Zikp6NKr4/jtALeJ5YbMGKc/8Zgqt8xeEW8CH3UU2H9ugdoNDE/pFt7MR2YjAHa2FzHGJ9QwM/ZVvO8LpCaO8BgFgGuxGg5QgyWLEst3r6jv1IzSbqQ0C77N8+YVVOs31CdZJED8Al1o1twMDMjib46ozJPkDDGBTiKigRk8KIY8=
 #  on:
-#    tags: true
-#    branch: master
-#    node: '12'
 #    repo: tannerntannern/plopify
+#    branch: master
+#    tags: true
+#    node: '12'
+#    condition: $TRAVIS_OS_NAME = linux
